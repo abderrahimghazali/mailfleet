@@ -14,6 +14,9 @@ function RootLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
+        <div className="w-full h-8 fixed top-0 left-0 z-50 pointer-events-none" data-tauri-drag-region>
+          <div className="w-full h-full pointer-events-auto" data-tauri-drag-region />
+        </div>
         <Outlet />
       </SidebarInset>
     </SidebarProvider>

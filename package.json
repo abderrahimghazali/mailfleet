@@ -1,13 +1,16 @@
 {
-  "name": "composer",
+  "name": "mailfleet",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:tauri": "npm run build:icon && tauri dev",
+    "build": "npm run build:icon && tsc && vite build",
+    "build:tauri": "npm run build:icon && tauri build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:icon": "tauri icon ./src-tauri/icons/icon.png"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",

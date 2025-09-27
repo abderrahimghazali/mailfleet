@@ -158,16 +158,16 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="inset" {...props}>
-      <SidebarHeader>
+      <SidebarHeader  data-tauri-drag-region>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="pt-2">
             <SidebarMenuButton size="lg" asChild>
               <Link to={route.home}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <img src="/icon-32.png" alt="Mailfleet" className="size-8 rounded-lg" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Composer</span>
+                  <span className="truncate font-semibold">Mailfleet</span>
                 </div>
               </Link>
             </SidebarMenuButton>
