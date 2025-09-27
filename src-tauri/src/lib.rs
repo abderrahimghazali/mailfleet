@@ -1,8 +1,8 @@
 mod database;
 
+use database::{commands::*, storage::DatabaseStorage};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use database::{storage::DatabaseStorage, commands::*};
 
 type DatabaseState = Arc<Mutex<DatabaseStorage>>;
 

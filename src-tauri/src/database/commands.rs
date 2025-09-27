@@ -1,14 +1,11 @@
-use tauri::State;
-use uuid::Uuid;
-use chrono::Utc;
 use anyhow::Result;
+use chrono::Utc;
 use std::sync::Arc;
+use tauri::State;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
-use crate::database::{
-    models::*,
-    storage::DatabaseStorage,
-};
+use crate::database::{models::*, storage::DatabaseStorage};
 
 type DatabaseState = Arc<Mutex<DatabaseStorage>>;
 
@@ -55,7 +52,10 @@ pub async fn create_campaign(
     };
 
     data.campaigns.push(campaign.clone());
-    storage.save_campaigns(&data).await.map_err(|e| e.to_string())?;
+    storage
+        .save_campaigns(&data)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(campaign)
 }
 
@@ -92,7 +92,10 @@ pub async fn update_campaign(
         campaign.updated_at = Utc::now();
 
         let updated_campaign = campaign.clone();
-        storage.save_campaigns(&data).await.map_err(|e| e.to_string())?;
+        storage
+            .save_campaigns(&data)
+            .await
+            .map_err(|e| e.to_string())?;
         Ok(updated_campaign)
     } else {
         Err("Campaign not found".to_string())
@@ -100,23 +103,25 @@ pub async fn update_campaign(
 }
 
 #[tauri::command]
-pub async fn delete_campaign(
-    storage: State<'_, DatabaseState>,
-    id: String,
-) -> Result<(), String> {
+pub async fn delete_campaign(storage: State<'_, DatabaseState>, id: String) -> Result<(), String> {
     let storage = storage.lock().await;
     let mut data = storage.get_campaigns().await.map_err(|e| e.to_string())?;
 
     let campaign_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
     data.campaigns.retain(|c| c.id != campaign_id);
 
-    storage.save_campaigns(&data).await.map_err(|e| e.to_string())?;
+    storage
+        .save_campaigns(&data)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 
 // Contact List commands
 #[tauri::command]
-pub async fn get_contact_lists(storage: State<'_, DatabaseState>) -> Result<Vec<ContactList>, String> {
+pub async fn get_contact_lists(
+    storage: State<'_, DatabaseState>,
+) -> Result<Vec<ContactList>, String> {
     let storage = storage.lock().await;
     let data = storage.get_contacts().await.map_err(|e| e.to_string())?;
     Ok(data.contact_lists)
@@ -140,7 +145,10 @@ pub async fn create_contact_list(
     };
 
     data.contact_lists.push(contact_list.clone());
-    storage.save_contacts(&data).await.map_err(|e| e.to_string())?;
+    storage
+        .save_contacts(&data)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(contact_list)
 }
 
@@ -183,7 +191,10 @@ pub async fn create_contact(
         list.contact_count += 1;
     }
 
-    storage.save_contacts(&data).await.map_err(|e| e.to_string())?;
+    storage
+        .save_contacts(&data)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(contact)
 }
 
@@ -217,7 +228,10 @@ pub async fn create_template(
     };
 
     data.templates.push(template.clone());
-    storage.save_templates(&data).await.map_err(|e| e.to_string())?;
+    storage
+        .save_templates(&data)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(template)
 }
 
@@ -251,7 +265,10 @@ pub async fn update_template(
         template.updated_at = Utc::now();
 
         let updated_template = template.clone();
-        storage.save_templates(&data).await.map_err(|e| e.to_string())?;
+        storage
+            .save_templates(&data)
+            .await
+            .map_err(|e| e.to_string())?;
         Ok(updated_template)
     } else {
         Err("Template not found".to_string())
@@ -300,7 +317,10 @@ pub async fn update_settings(
         };
     }
 
-    storage.save_settings(&settings).await.map_err(|e| e.to_string())?;
+    storage
+        .save_settings(&settings)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(settings)
 }
 
@@ -315,7 +335,8 @@ pub async fn get_campaign_analytics(
 
     let campaign_uuid = Uuid::parse_str(&campaign_id).map_err(|e| e.to_string())?;
 
-    Ok(data.campaign_analytics
+    Ok(data
+        .campaign_analytics
         .into_iter()
         .find(|a| a.campaign_id == campaign_uuid))
 }

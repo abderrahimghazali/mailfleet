@@ -1,8 +1,8 @@
-use std::path::PathBuf;
-use anyhow::{Result, Context};
-use tokio::fs;
-use serde::{Serialize, Deserialize};
 use crate::database::models::*;
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use tokio::fs;
 
 pub struct DatabaseStorage {
     pub data_dir: PathBuf,
@@ -15,8 +15,7 @@ impl DatabaseStorage {
     }
 
     fn get_app_data_dir() -> Result<PathBuf> {
-        let home_dir = dirs::home_dir()
-            .context("Could not find home directory")?;
+        let home_dir = dirs::home_dir().context("Could not find home directory")?;
 
         let data_dir = home_dir
             .join("Library")
@@ -29,16 +28,23 @@ impl DatabaseStorage {
 
     pub async fn init(&self) -> Result<()> {
         // Create data directory if it doesn't exist
-        fs::create_dir_all(&self.data_dir).await
+        fs::create_dir_all(&self.data_dir)
+            .await
             .context("Failed to create data directory")?;
 
         // Initialize all JSON files if they don't exist
-        self.init_file("campaigns.json", &CampaignsData::default()).await?;
-        self.init_file("contacts.json", &ContactsData::default()).await?;
-        self.init_file("templates.json", &TemplatesData::default()).await?;
-        self.init_file("settings.json", &Settings::default()).await?;
-        self.init_file("analytics.json", &AnalyticsData::default()).await?;
-        self.init_file("suppression.json", &SuppressionData::default()).await?;
+        self.init_file("campaigns.json", &CampaignsData::default())
+            .await?;
+        self.init_file("contacts.json", &ContactsData::default())
+            .await?;
+        self.init_file("templates.json", &TemplatesData::default())
+            .await?;
+        self.init_file("settings.json", &Settings::default())
+            .await?;
+        self.init_file("analytics.json", &AnalyticsData::default())
+            .await?;
+        self.init_file("suppression.json", &SuppressionData::default())
+            .await?;
 
         Ok(())
     }
@@ -50,7 +56,8 @@ impl DatabaseStorage {
             let json_data = serde_json::to_string_pretty(default_data)
                 .context("Failed to serialize default data")?;
 
-            fs::write(&file_path, json_data).await
+            fs::write(&file_path, json_data)
+                .await
                 .context(format!("Failed to create {}", filename))?;
         }
 
@@ -62,26 +69,28 @@ impl DatabaseStorage {
         T: for<'de> Deserialize<'de>,
     {
         let file_path = self.data_dir.join(filename);
-        let content = fs::read_to_string(&file_path).await
+        let content = fs::read_to_string(&file_path)
+            .await
             .context(format!("Failed to read {}", filename))?;
 
-        let data: T = serde_json::from_str(&content)
-            .context(format!("Failed to parse {}", filename))?;
+        let data: T =
+            serde_json::from_str(&content).context(format!("Failed to parse {}", filename))?;
 
         Ok(data)
     }
 
     async fn write_file<T: Serialize>(&self, filename: &str, data: &T) -> Result<()> {
         let file_path = self.data_dir.join(filename);
-        let json_data = serde_json::to_string_pretty(data)
-            .context("Failed to serialize data")?;
+        let json_data = serde_json::to_string_pretty(data).context("Failed to serialize data")?;
 
         // Write to a temporary file first, then rename for atomic operation
         let temp_path = file_path.with_extension("tmp");
-        fs::write(&temp_path, json_data).await
+        fs::write(&temp_path, json_data)
+            .await
             .context(format!("Failed to write temp file for {}", filename))?;
 
-        fs::rename(&temp_path, &file_path).await
+        fs::rename(&temp_path, &file_path)
+            .await
             .context(format!("Failed to rename temp file for {}", filename))?;
 
         Ok(())
