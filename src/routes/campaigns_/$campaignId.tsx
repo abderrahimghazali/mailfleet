@@ -3,6 +3,7 @@ import { route } from '@/constants/routes'
 import { useEffect, useState } from 'react'
 import { DatabaseService } from '@/services/database'
 import type { Campaign, ContactList, CampaignAnalytics } from '@/types/database'
+import { PageHeader } from '@/components/PageHeader'
 import {
   Mail,
   Edit,
@@ -20,8 +21,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from "@/components/ui/card"
+import { toast } from 'sonner'
 
-export const Route = createFileRoute('/campaigns/$campaignId')({
+export const Route = createFileRoute('/campaigns_/$campaignId')({
   component: CampaignDetail,
 })
 
@@ -78,10 +80,11 @@ function CampaignDetail() {
 
     try {
       await DatabaseService.deleteCampaign(campaign.id)
+      toast.success('Campaign deleted successfully!')
       navigate({ to: route.campaigns })
     } catch (err) {
       console.error('Failed to delete campaign:', err)
-      alert('Failed to delete campaign')
+      toast.error('Failed to delete campaign')
     }
   }
 
@@ -137,8 +140,16 @@ function CampaignDetail() {
     campaign.contact_list_ids.includes(list.id)
   )
 
+  const breadcrumbs = [
+    { label: "Dashboard", href: route.dashboard },
+    { label: "Campaigns", href: route.campaigns },
+    { label: campaign?.name || "Campaign Details" }
+  ]
+
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
+    <>
+      <PageHeader breadcrumbs={breadcrumbs} />
+      <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -332,6 +343,7 @@ function CampaignDetail() {
             </Card>
           </div>
         </div>
-    </div>
+      </div>
+    </>
   )
 }

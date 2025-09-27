@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/campaigns/create')({
   component: CreateCampaign,
@@ -113,6 +114,9 @@ function CreateCampaign() {
       }
 
       await DatabaseService.createCampaign(request)
+
+      // Show success toast
+      toast.success('Campaign created successfully!')
 
       // Navigate back to campaigns list
       navigate({ to: route.campaigns })

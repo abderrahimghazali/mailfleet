@@ -110,7 +110,7 @@ export interface UpdateCampaignRequest {
   id: string;
   name?: string;
   subject?: string;
-  status?: string;
+  status?: CampaignStatus;
 }
 
 export interface CreateContactListRequest {

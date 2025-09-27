@@ -4,6 +4,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { Toaster } from "@/components/ui/sonner"
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -19,6 +20,7 @@ function RootLayout() {
         </div>
         <Outlet />
       </SidebarInset>
+      <Toaster position="bottom-right" />
     </SidebarProvider>
   )
 }

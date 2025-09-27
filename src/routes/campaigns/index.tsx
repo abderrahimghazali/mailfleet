@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/campaigns/')({
   component: CampaignsIndex,
@@ -117,8 +118,10 @@ function CampaignsIndex() {
       setDeletingId(campaignId)
       await DatabaseService.deleteCampaign(campaignId)
       setCampaigns(prev => prev.filter(campaign => campaign.id !== campaignId))
+      toast.success('Campaign deleted successfully!')
     } catch (error) {
       console.error('Failed to delete campaign:', error)
+      toast.error('Failed to delete campaign')
     } finally {
       setDeletingId(null)
     }

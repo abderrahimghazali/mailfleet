@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Save, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/campaigns/$campaignId/edit')({
   component: EditCampaign,
@@ -60,7 +61,15 @@ function EditCampaign() {
   }, [campaignId])
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    if (field === 'status') {
+      // Ensure status is a valid CampaignStatus
+      const validStatuses: CampaignStatus[] = ['Draft', 'Scheduled', 'Sending', 'Sent', 'Paused']
+      if (validStatuses.includes(value as CampaignStatus)) {
+        setFormData(prev => ({ ...prev, [field]: value as CampaignStatus }))
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }))
+    }
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -71,20 +80,39 @@ function EditCampaign() {
       setSaving(true)
       setError(null)
 
+      // Basic validation
+      if (!formData.name.trim()) {
+        throw new Error('Campaign name is required')
+      }
+      if (!formData.subject.trim()) {
+        throw new Error('Subject line is required')
+      }
+
+      // Validate status
+      const validStatuses: CampaignStatus[] = ['Draft', 'Scheduled', 'Sending', 'Sent', 'Paused']
+      if (!validStatuses.includes(formData.status)) {
+        throw new Error(`Invalid status: ${formData.status}. Must be one of: ${validStatuses.join(', ')}`)
+      }
+
       const updateRequest: UpdateCampaignRequest = {
         id: campaign.id,
-        name: formData.name,
-        subject: formData.subject,
+        name: formData.name.trim(),
+        subject: formData.subject.trim(),
         status: formData.status
       }
 
       await DatabaseService.updateCampaign(updateRequest)
 
+      // Show success toast
+      toast.success('Campaign updated successfully!')
+
       // Navigate back to campaigns list
       navigate({ to: route.campaigns })
     } catch (err) {
       console.error('Failed to update campaign:', err)
-      setError('Failed to update campaign')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update campaign'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setSaving(false)
     }
