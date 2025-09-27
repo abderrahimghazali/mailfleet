@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,14 +84,25 @@ function CampaignsIndex() {
     loadCampaigns()
   }, [])
 
+  const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+      case 'Sent': return 'default'
+      case 'Sending': return 'default'
+      case 'Scheduled': return 'secondary'
+      case 'Draft': return 'outline'
+      case 'Paused': return 'destructive'
+      default: return 'outline'
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Sent': return 'bg-green-100 text-green-800'
-      case 'Draft': return 'bg-gray-100 text-gray-800'
-      case 'Sending': return 'bg-blue-100 text-blue-800'
-      case 'Scheduled': return 'bg-yellow-100 text-yellow-800'
-      case 'Paused': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Sent': return 'bg-green-100 text-green-800 border-green-200'
+      case 'Sending': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'Scheduled': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'Draft': return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'Paused': return 'bg-red-100 text-red-800 border-red-200'
+      default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
@@ -178,9 +190,12 @@ function CampaignsIndex() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(campaign.status)}`}>
+                  <Badge
+                    variant={getStatusVariant(campaign.status)}
+                    className={getStatusColor(campaign.status)}
+                  >
                     {campaign.status}
-                  </span>
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   {campaign.recipients?.toLocaleString() || '0'}
@@ -204,28 +219,28 @@ function CampaignsIndex() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 hover:bg-blue-50"
                       onClick={() => navigate({ to: '/campaigns/$campaignId', params: { campaignId: campaign.id } })}
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 hover:bg-yellow-50"
                       onClick={() => navigate({ to: '/campaigns/$campaignId/edit', params: { campaignId: campaign.id } })}
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-4 w-4 text-yellow-600" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 hover:bg-red-50"
                           disabled={deletingId === campaign.id}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
