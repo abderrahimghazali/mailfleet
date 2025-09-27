@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -158,128 +159,134 @@ function CampaignsIndex() {
 
       {/* Campaigns Table */}
       {loading ? (
-        <div className="p-8 text-center">
-          <p className="text-muted-foreground">Loading campaigns...</p>
-        </div>
+        <Card>
+          <div className="p-8 text-center">
+            <p className="text-muted-foreground">Loading campaigns...</p>
+          </div>
+        </Card>
       ) : campaigns.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Campaign</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Recipients</TableHead>
-              <TableHead className="text-right">Open Rate</TableHead>
-              <TableHead className="text-right">Unsubscribed</TableHead>
-              <TableHead className="text-right">Bounced</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right w-32">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {campaigns.map((campaign) => (
-              <TableRow key={campaign.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Mail className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <div className="font-medium">{campaign.name}</div>
-                      <div className="text-sm text-muted-foreground">{campaign.subject}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={getStatusVariant(campaign.status)}
-                    className={getStatusColor(campaign.status)}
-                  >
-                    {campaign.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {campaign.recipients?.toLocaleString() || '0'}
-                </TableCell>
-                <TableCell className="text-right">
-                  {campaign.analytics
-                    ? formatPercentage(campaign.analytics.opened, campaign.analytics.sent)
-                    : '0%'}
-                </TableCell>
-                <TableCell className="text-right">
-                  {campaign.analytics?.unsubscribed || 0}
-                </TableCell>
-                <TableCell className="text-right">
-                  {campaign.analytics?.bounced || 0}
-                </TableCell>
-                <TableCell>
-                  {new Date(campaign.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="text-right w-32">
-                  <div className="flex items-center gap-1 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-blue-50"
-                      onClick={() => navigate({ to: '/campaigns/$campaignId', params: { campaignId: campaign.id } })}
-                    >
-                      <Eye className="h-4 w-4 text-blue-600" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-yellow-50"
-                      onClick={() => navigate({ to: '/campaigns/$campaignId/edit', params: { campaignId: campaign.id } })}
-                    >
-                      <Edit className="h-4 w-4 text-yellow-600" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-red-50"
-                          disabled={deletingId === campaign.id}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{campaign.name}"? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteCampaign(campaign.id)}
-                            className="bg-destructive text-white hover:bg-destructive/90"
-                          >
-                            Delete Campaign
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Campaign</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Recipients</TableHead>
+                <TableHead className="text-right">Open Rate</TableHead>
+                <TableHead className="text-right">Unsubscribed</TableHead>
+                <TableHead className="text-right">Bounced</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right w-32">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {campaigns.map((campaign) => (
+                <TableRow key={campaign.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Mail className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{campaign.name}</div>
+                        <div className="text-sm text-muted-foreground">{campaign.subject}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={getStatusVariant(campaign.status)}
+                      className={getStatusColor(campaign.status)}
+                    >
+                      {campaign.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {campaign.recipients?.toLocaleString() || '0'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {campaign.analytics
+                      ? formatPercentage(campaign.analytics.opened, campaign.analytics.sent)
+                      : '0%'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {campaign.analytics?.unsubscribed || 0}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {campaign.analytics?.bounced || 0}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(campaign.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right w-32">
+                    <div className="flex items-center gap-1 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-blue-50"
+                        onClick={() => navigate({ to: '/campaigns/$campaignId', params: { campaignId: campaign.id } })}
+                      >
+                        <Eye className="h-4 w-4 text-blue-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-yellow-50"
+                        onClick={() => navigate({ to: '/campaigns/$campaignId/edit', params: { campaignId: campaign.id } })}
+                      >
+                        <Edit className="h-4 w-4 text-yellow-600" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-red-50"
+                            disabled={deletingId === campaign.id}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{campaign.name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteCampaign(campaign.id)}
+                              className="bg-destructive text-white hover:bg-destructive/90"
+                            >
+                              Delete Campaign
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       ) : (
-        <div className="p-8 text-center">
-          <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No campaigns yet</h3>
-          <p className="text-muted-foreground mb-4">Create your first email campaign to get started</p>
-          <Button
-            size="sm"
-            onClick={() => navigate({ to: '/campaigns/create' })}
-          >
-            <Plus className="h-4 w-4" />
-            Create Campaign
-          </Button>
-        </div>
+        <Card>
+          <div className="p-8 text-center">
+            <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No campaigns yet</h3>
+            <p className="text-muted-foreground mb-4">Create your first email campaign to get started</p>
+            <Button
+              size="sm"
+              onClick={() => navigate({ to: '/campaigns/create' })}
+            >
+              <Plus className="h-4 w-4" />
+              Create Campaign
+            </Button>
+          </div>
+        </Card>
       )}
     </div>
   )

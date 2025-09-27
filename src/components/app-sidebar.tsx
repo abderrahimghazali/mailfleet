@@ -44,73 +44,21 @@ const data = {
       title: "Campaigns",
       url: route.campaigns,
       icon: Mail,
-      items: [
-        {
-          title: "All Campaigns",
-          url: route.campaigns,
-        },
-        {
-          title: "Create Campaign",
-          url: route.campaignCreate,
-        },
-        {
-          title: "Draft Campaigns",
-          url: route.campaigns,
-        },
-        {
-          title: "Sent Campaigns",
-          url: route.campaigns,
-        },
-      ],
     },
     {
       title: "Contacts",
       url: route.contacts,
       icon: Users,
-      items: [
-        {
-          title: "Contact Lists",
-          url: route.contacts,
-        },
-        {
-          title: "Import Contacts",
-          url: route.contactsImport,
-        },
-        {
-          title: "Validate Emails",
-          url: route.contactsValidate,
-        },
-      ],
     },
     {
       title: "Templates",
       url: route.templates,
       icon: SquareTerminal,
-      items: [
-        {
-          title: "All Templates",
-          url: route.templates,
-        },
-        {
-          title: "Create Template",
-          url: route.templatesCreate,
-        },
-      ],
     },
     {
       title: "Analytics",
       url: route.analytics,
       icon: BarChart3,
-      items: [
-        {
-          title: "Campaign Reports",
-          url: route.analytics,
-        },
-        {
-          title: "Performance Overview",
-          url: route.analyticsOverview,
-        },
-      ],
     },
   ],
   navSecondary: [
