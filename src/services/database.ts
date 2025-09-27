@@ -1,0 +1,121 @@
+import { invoke } from '@tauri-apps/api/core';
+import type {
+  Campaign,
+  Contact,
+  ContactList,
+  Template,
+  Settings,
+  CampaignAnalytics,
+  CreateCampaignRequest,
+  UpdateCampaignRequest,
+  CreateContactListRequest,
+  CreateContactRequest,
+  CreateTemplateRequest,
+  UpdateTemplateRequest,
+  UpdateSettingsRequest,
+} from '../types/database';
+
+export class DatabaseService {
+  // Initialize database
+  static async initDatabase(): Promise<void> {
+    return invoke('init_database');
+  }
+
+  // Campaign operations
+  static async getCampaigns(): Promise<Campaign[]> {
+    return invoke('get_campaigns');
+  }
+
+  static async createCampaign(request: CreateCampaignRequest): Promise<Campaign> {
+    return invoke('create_campaign', {
+      name: request.name,
+      subject: request.subject,
+      fromEmail: request.from_email,
+      fromName: request.from_name,
+    });
+  }
+
+  static async updateCampaign(request: UpdateCampaignRequest): Promise<Campaign> {
+    return invoke('update_campaign', {
+      id: request.id,
+      name: request.name,
+      subject: request.subject,
+      status: request.status,
+    });
+  }
+
+  static async deleteCampaign(id: string): Promise<void> {
+    return invoke('delete_campaign', { id });
+  }
+
+  // Contact List operations
+  static async getContactLists(): Promise<ContactList[]> {
+    return invoke('get_contact_lists');
+  }
+
+  static async createContactList(request: CreateContactListRequest): Promise<ContactList> {
+    return invoke('create_contact_list', {
+      name: request.name,
+      description: request.description,
+    });
+  }
+
+  // Contact operations
+  static async getContacts(): Promise<Contact[]> {
+    return invoke('get_contacts');
+  }
+
+  static async createContact(request: CreateContactRequest): Promise<Contact> {
+    return invoke('create_contact', {
+      email: request.email,
+      firstName: request.first_name,
+      lastName: request.last_name,
+      listId: request.list_id,
+    });
+  }
+
+  // Template operations
+  static async getTemplates(): Promise<Template[]> {
+    return invoke('get_templates');
+  }
+
+  static async createTemplate(request: CreateTemplateRequest): Promise<Template> {
+    return invoke('create_template', {
+      name: request.name,
+      subject: request.subject,
+      htmlContent: request.html_content,
+      textContent: request.text_content,
+    });
+  }
+
+  static async updateTemplate(request: UpdateTemplateRequest): Promise<Template> {
+    return invoke('update_template', {
+      id: request.id,
+      name: request.name,
+      subject: request.subject,
+      htmlContent: request.html_content,
+      textContent: request.text_content,
+    });
+  }
+
+  // Settings operations
+  static async getSettings(): Promise<Settings> {
+    return invoke('get_settings');
+  }
+
+  static async updateSettings(request: UpdateSettingsRequest): Promise<Settings> {
+    return invoke('update_settings', {
+      sesAccessKey: request.ses_access_key,
+      sesSecretKey: request.ses_secret_key,
+      sesRegion: request.ses_region,
+      defaultFromEmail: request.default_from_email,
+      defaultFromName: request.default_from_name,
+      theme: request.theme,
+    });
+  }
+
+  // Analytics operations
+  static async getCampaignAnalytics(campaignId: string): Promise<CampaignAnalytics | null> {
+    return invoke('get_campaign_analytics', { campaignId });
+  }
+}

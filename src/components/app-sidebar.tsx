@@ -4,23 +4,19 @@ import * as React from "react"
 import { Link } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import {
-  BookOpen,
+  BarChart3,
   Bot,
-  Command,
-  Frame,
+  Home,
   LifeBuoy,
-  Map,
-  PieChart,
+  Mail,
   Send,
   Settings,
-  Settings2,
   SquareTerminal,
+  Users,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
@@ -33,93 +29,86 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "MailFleet User",
+    email: "user@mailfleet.com",
+    avatar: "/avatars/user.jpg",
   },
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
+      title: "Dashboard",
+      url: route.dashboard,
+      icon: Home,
       isActive: true,
+    },
+    {
+      title: "Campaigns",
+      url: route.campaigns,
+      icon: Mail,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "All Campaigns",
+          url: route.campaigns,
         },
         {
-          title: "Starred",
-          url: "#",
+          title: "Create Campaign",
+          url: route.campaignCreate,
         },
         {
-          title: "Settings",
-          url: "#",
+          title: "Draft Campaigns",
+          url: route.campaigns,
+        },
+        {
+          title: "Sent Campaigns",
+          url: route.campaigns,
         },
       ],
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
+      title: "Contacts",
+      url: route.contacts,
+      icon: Users,
       items: [
         {
-          title: "Genesis",
-          url: "#",
+          title: "Contact Lists",
+          url: route.contacts,
         },
         {
-          title: "Explorer",
-          url: "#",
+          title: "Import Contacts",
+          url: route.contactsImport,
         },
         {
-          title: "Quantum",
-          url: "#",
+          title: "Validate Emails",
+          url: route.contactsValidate,
         },
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
+      title: "Templates",
+      url: route.templates,
+      icon: SquareTerminal,
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: "All Templates",
+          url: route.templates,
         },
         {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
+          title: "Create Template",
+          url: route.templatesCreate,
         },
       ],
     },
     {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
+      title: "Analytics",
+      url: route.analytics,
+      icon: BarChart3,
       items: [
         {
-          title: "General",
-          url: "#",
+          title: "Campaign Reports",
+          url: route.analytics,
         },
         {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          title: "Performance Overview",
+          url: route.analyticsOverview,
         },
       ],
     },
@@ -134,23 +123,6 @@ const data = {
       title: "Feedback",
       url: "#",
       icon: Send,
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 }
@@ -175,7 +147,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavProjects projects={data.projects} />
+        <NavMain items={data.navMain} />
+        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

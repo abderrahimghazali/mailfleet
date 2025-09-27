@@ -1,5 +1,16 @@
 export const route = {
   home: '/',
-  agents: '/agents',
+  dashboard: '/',
+  campaigns: '/campaigns',
+  campaignCreate: '/campaigns/create',
+  contacts: '/contacts',
+  contactsImport: '/contacts/import',
+  contactsValidate: '/contacts/validate',
+  contactsCreateList: '/contacts/create-list',
+  templates: '/templates',
+  templatesCreate: '/templates/create',
+  analytics: '/analytics',
+  analyticsOverview: '/analytics/overview',
   settings: '/settings',
+  agents: '/agents',
 } as const

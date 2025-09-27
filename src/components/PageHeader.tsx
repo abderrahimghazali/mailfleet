@@ -9,13 +9,13 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
-interface BreadcrumbItem {
+interface BreadcrumbData {
   label: string
   href?: string
 }
 
 interface PageHeaderProps {
-  breadcrumbs: BreadcrumbItem[]
+  breadcrumbs: BreadcrumbData[]
 }
 
 export function PageHeader({ breadcrumbs }: PageHeaderProps) {
@@ -30,8 +30,8 @@ export function PageHeader({ breadcrumbs }: PageHeaderProps) {
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
-              <div key={index} className="flex items-center">
-                <BreadcrumbItem className={index === 0 ? "hidden md:block" : ""}>
+              <>
+                <BreadcrumbItem key={index} className={index === 0 ? "hidden md:block" : ""}>
                   {item.href ? (
                     <BreadcrumbLink href={item.href}>
                       {item.label}
@@ -41,9 +41,9 @@ export function PageHeader({ breadcrumbs }: PageHeaderProps) {
                   )}
                 </BreadcrumbItem>
                 {index < breadcrumbs.length - 1 && (
-                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbSeparator key={`separator-${index}`} className="hidden md:block" />
                 )}
-              </div>
+              </>
             ))}
           </BreadcrumbList>
         </Breadcrumb>
