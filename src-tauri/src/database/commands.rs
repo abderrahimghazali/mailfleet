@@ -24,6 +24,15 @@ pub async fn get_campaigns(storage: State<'_, DatabaseState>) -> Result<Vec<Camp
 }
 
 #[tauri::command]
+pub async fn get_campaign_by_id(storage: State<'_, DatabaseState>, id: String) -> Result<Option<Campaign>, String> {
+    let storage = storage.lock().await;
+    let data = storage.get_campaigns().await.map_err(|e| e.to_string())?;
+
+    let campaign_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    Ok(data.campaigns.into_iter().find(|c| c.id == campaign_id))
+}
+
+#[tauri::command]
 pub async fn create_campaign(
     storage: State<'_, DatabaseState>,
     name: String,

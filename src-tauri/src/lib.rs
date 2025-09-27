@@ -25,6 +25,7 @@ pub fn run() {
             greet,
             init_database,
             get_campaigns,
+            get_campaign_by_id,
             create_campaign,
             update_campaign,
             delete_campaign,

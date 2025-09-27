@@ -26,6 +26,10 @@ export class DatabaseService {
     return invoke('get_campaigns');
   }
 
+  static async getCampaignById(id: string): Promise<Campaign | null> {
+    return invoke('get_campaign_by_id', { id });
+  }
+
   static async createCampaign(request: CreateCampaignRequest): Promise<Campaign> {
     return invoke('create_campaign', {
       name: request.name,

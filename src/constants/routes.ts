@@ -3,6 +3,8 @@ export const route = {
   dashboard: '/',
   campaigns: '/campaigns',
   campaignCreate: '/campaigns/create',
+  campaignDetail: '/campaigns/$campaignId',
+  campaignEdit: '/campaigns/$campaignId/edit',
   contacts: '/contacts',
   contactsImport: '/contacts/import',
   contactsValidate: '/contacts/validate',
