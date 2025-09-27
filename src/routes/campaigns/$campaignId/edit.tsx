@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { DatabaseService } from '@/services/database'
-import type { Campaign, UpdateCampaignRequest } from '@/types/database'
+import type { Campaign, UpdateCampaignRequest, CampaignStatus } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,7 +28,7 @@ function EditCampaign() {
     subject: '',
     from_email: '',
     from_name: '',
-    status: 'Draft' as any
+    status: 'Draft' as CampaignStatus
   })
 
   useEffect(() => {
@@ -63,7 +63,7 @@ function EditCampaign() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!campaign) return
 
