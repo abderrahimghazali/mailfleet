@@ -58,7 +58,7 @@ function CampaignsIndex() {
               const analytics = await DatabaseService.getCampaignAnalytics(campaign.id)
               return {
                 ...campaign,
-                analytics,
+                analytics: analytics || undefined,
                 recipients: analytics?.sent || 0
               }
             } catch (error) {
