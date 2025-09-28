@@ -4,7 +4,7 @@ import { route } from '@/constants/routes'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { DatabaseService } from '@/services/database'
-import type { ContactList, Contact } from '@/types/database'
+import type { ContactList } from '@/types/database'
 import { Users, Plus, Upload, CheckCircle, Eye, Edit, Trash2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { toast } from 'sonner'
@@ -34,18 +34,13 @@ export const Route = createFileRoute('/contacts/')({
 
 function Contacts() {
   const [contactLists, setContactLists] = useState<ContactList[]>([])
-  const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [listsData, contactsData] = await Promise.all([
-          DatabaseService.getContactLists(),
-          DatabaseService.getContacts(),
-        ])
+        const listsData = await DatabaseService.getContactLists()
         setContactLists(listsData)
-        setContacts(contactsData)
       } catch (error) {
         console.error('Failed to load contacts data:', error)
       } finally {
@@ -60,16 +55,6 @@ function Contacts() {
     { label: "Dashboard", href: route.dashboard },
     { label: "Contacts" }
   ]
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800 border-green-200'
-      case 'Unsubscribed': return 'bg-red-100 text-red-800 border-red-200'
-      case 'Bounced': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'Complained': return 'bg-red-100 text-red-800 border-red-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
 
   const totalContacts = contactLists.reduce((sum, list) => sum + list.contact_count, 0)
 

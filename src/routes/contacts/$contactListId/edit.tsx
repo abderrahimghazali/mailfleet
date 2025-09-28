@@ -9,14 +9,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Loader2, Save, X, Plus, Users, Trash2 } from 'lucide-react'
+import { Loader2, Save, Plus, Users, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { route } from '@/constants/routes'
@@ -58,7 +50,6 @@ function EditContactList() {
     last_name: ''
   })
   const [contacts, setContacts] = useState<Contact[]>([])
-  const [loadingContacts, setLoadingContacts] = useState(false)
 
   useEffect(() => {
     async function loadData() {

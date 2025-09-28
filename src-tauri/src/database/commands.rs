@@ -227,7 +227,9 @@ pub async fn delete_contact_list(
 
     // Remove the list ID from all contacts
     for contact in &mut data.contacts {
-        contact.list_ids.retain(|&list_id_ref| list_id_ref != list_id);
+        contact
+            .list_ids
+            .retain(|&list_id_ref| list_id_ref != list_id);
     }
 
     storage
@@ -246,7 +248,8 @@ pub async fn get_contacts_by_list_id(
     let data = storage.get_contacts().await.map_err(|e| e.to_string())?;
 
     let list_uuid = Uuid::parse_str(&list_id).map_err(|e| e.to_string())?;
-    let filtered_contacts: Vec<Contact> = data.contacts
+    let filtered_contacts: Vec<Contact> = data
+        .contacts
         .into_iter()
         .filter(|contact| contact.list_ids.contains(&list_uuid))
         .collect();
@@ -255,10 +258,7 @@ pub async fn get_contacts_by_list_id(
 }
 
 #[tauri::command]
-pub async fn delete_contact(
-    storage: State<'_, DatabaseState>,
-    id: String,
-) -> Result<(), String> {
+pub async fn delete_contact(storage: State<'_, DatabaseState>, id: String) -> Result<(), String> {
     let storage = storage.lock().await;
     let mut data = storage.get_contacts().await.map_err(|e| e.to_string())?;
     let contact_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
@@ -273,7 +273,11 @@ pub async fn delete_contact(
 
     // Update contact counts for all lists
     for list in &mut data.contact_lists {
-        let contacts_in_list = data.contacts.iter().filter(|c| c.list_ids.contains(&list.id)).count();
+        let contacts_in_list = data
+            .contacts
+            .iter()
+            .filter(|c| c.list_ids.contains(&list.id))
+            .count();
         list.contact_count = contacts_in_list;
     }
 
