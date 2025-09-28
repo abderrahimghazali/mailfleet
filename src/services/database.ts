@@ -45,6 +45,7 @@ export class DatabaseService {
       id: request.id,
       name: request.name,
       subject: request.subject,
+      content: request.content,
       status: request.status?.toLowerCase(),
     });
   }

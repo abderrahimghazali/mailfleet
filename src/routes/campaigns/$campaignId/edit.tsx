@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Save, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { PlateEditor } from '@/components/plate-editor'
 
 export const Route = createFileRoute('/campaigns/$campaignId/edit')({
   component: EditCampaign,
@@ -30,6 +31,8 @@ function EditCampaign() {
     from_name: ''
   })
 
+  const [editorContent, setEditorContent] = useState('')
+
   useEffect(() => {
     async function loadCampaign() {
       try {
@@ -43,6 +46,7 @@ function EditCampaign() {
             from_email: data.settings.from_email,
             from_name: data.settings.from_name
           })
+          setEditorContent(data.content || '')
         } else {
           setError('Campaign not found')
         }
@@ -80,7 +84,8 @@ function EditCampaign() {
       const updateRequest: UpdateCampaignRequest = {
         id: campaign.id,
         name: formData.name.trim(),
-        subject: formData.subject.trim()
+        subject: formData.subject.trim(),
+        content: editorContent
       }
 
       await DatabaseService.updateCampaign(updateRequest)
@@ -158,6 +163,15 @@ function EditCampaign() {
                     onChange={(e) => handleInputChange('subject', e.target.value)}
                     placeholder="Enter email subject"
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="content">Email Content</Label>
+                  <PlateEditor
+                    content={editorContent}
+                    onChange={setEditorContent}
+                    placeholder="Write your email content here..."
                   />
                 </div>
 

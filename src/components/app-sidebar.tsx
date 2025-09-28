@@ -11,7 +11,6 @@ import {
   Mail,
   Send,
   Settings,
-  SquareTerminal,
   Users,
 } from "lucide-react"
 
@@ -50,11 +49,11 @@ const data = {
       url: route.contacts,
       icon: Users,
     },
-    {
-      title: "Templates",
-      url: route.templates,
-      icon: SquareTerminal,
-    },
+    // {
+    //   title: "Templates",
+    //   url: route.templates,
+    //   icon: SquareTerminal,
+    // },
     {
       title: "Analytics",
       url: route.analytics,

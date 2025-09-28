@@ -8,6 +8,7 @@ pub struct Campaign {
     pub id: Uuid,
     pub name: String,
     pub subject: String,
+    pub content: Option<String>,
     pub template_id: Option<Uuid>,
     pub contact_list_ids: Vec<Uuid>,
     pub status: CampaignStatus,

@@ -50,6 +50,7 @@ pub async fn create_campaign(
         id: Uuid::new_v4(),
         name,
         subject,
+        content: None,
         template_id: None,
         contact_list_ids: vec![],
         status: CampaignStatus::Draft,
@@ -77,6 +78,7 @@ pub async fn update_campaign(
     id: String,
     name: Option<String>,
     subject: Option<String>,
+    content: Option<String>,
     status: Option<String>,
 ) -> Result<Campaign, String> {
     let storage = storage.lock().await;
@@ -90,6 +92,9 @@ pub async fn update_campaign(
         }
         if let Some(subject) = subject {
             campaign.subject = subject;
+        }
+        if let Some(content) = content {
+            campaign.content = Some(content);
         }
         if let Some(status_str) = status {
             campaign.status = match status_str.as_str() {

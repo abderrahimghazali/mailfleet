@@ -16,6 +16,7 @@ export interface Campaign {
   id: string;
   name: string;
   subject: string;
+  content?: string;
   template_id?: string;
   contact_list_ids: string[];
   status: CampaignStatus;
@@ -111,6 +112,7 @@ export interface UpdateCampaignRequest {
   id: string;
   name?: string;
   subject?: string;
+  content?: string;
   status?: CampaignStatus;
 }
 
