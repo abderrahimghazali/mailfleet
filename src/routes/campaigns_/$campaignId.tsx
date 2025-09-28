@@ -12,15 +12,12 @@ import {
   Settings as SettingsIcon,
   BarChart3,
   Eye,
-  Send,
-  Clock,
-  CheckCircle,
-  PauseCircle,
   AlertCircle
 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/campaigns_/$campaignId')({
@@ -89,27 +86,6 @@ function CampaignDetail() {
   }
 
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Sent': return <CheckCircle className="h-5 w-5 text-green-500" />
-      case 'Draft': return <Edit className="h-5 w-5 text-gray-500" />
-      case 'Sending': return <Send className="h-5 w-5 text-blue-500" />
-      case 'Scheduled': return <Clock className="h-5 w-5 text-yellow-500" />
-      case 'Paused': return <PauseCircle className="h-5 w-5 text-red-500" />
-      default: return <AlertCircle className="h-5 w-5 text-gray-500" />
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Sent': return 'bg-green-100 text-green-800 border-green-200'
-      case 'Draft': return 'bg-gray-100 text-gray-800 border-gray-200'
-      case 'Sending': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'Scheduled': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'Paused': return 'bg-red-100 text-red-800 border-red-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
 
   if (loading) {
     return (
@@ -176,173 +152,149 @@ function CampaignDetail() {
           </div>
         </div>
 
-        {/* Status Banner */}
-        <div className={`flex items-center gap-3 p-4 rounded-lg border ${getStatusColor(campaign.status)}`}>
-          {getStatusIcon(campaign.status)}
-          <div>
-            <p className="font-medium">Campaign Status: {campaign.status}</p>
-            {campaign.scheduled_at && (
-              <p className="text-sm opacity-75">
-                Scheduled for: {new Date(campaign.scheduled_at).toLocaleString()}
-              </p>
+
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="info" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Info
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="contacts" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Contacts
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info" className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold mb-4">Campaign Information</h3>
+
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Campaign Name</label>
+                  <p className="mt-1">{campaign.name}</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Subject Line</label>
+                  <p className="mt-1">{campaign.subject}</p>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Created</label>
+                    <p className="mt-1 text-sm">{new Date(campaign.created_at).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Last Updated</label>
+                    <p className="mt-1 text-sm">{new Date(campaign.updated_at).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email Settings */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold mb-4">Email Settings</h3>
+
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">From Name</label>
+                  <p className="mt-1">{campaign.settings.from_name}</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">From Email</label>
+                  <p className="mt-1">{campaign.settings.from_email}</p>
+                </div>
+
+                {campaign.settings.reply_to && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Reply To</label>
+                    <p className="mt-1">{campaign.settings.reply_to}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6 mt-6">
+            {analytics ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-background rounded-lg border">
+                  <p className="text-3xl font-bold text-blue-600">{analytics.sent}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Sent</p>
+                </div>
+                <div className="text-center p-4 bg-background rounded-lg border">
+                  <p className="text-3xl font-bold text-green-600">{analytics.delivered}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Delivered</p>
+                </div>
+                <div className="text-center p-4 bg-background rounded-lg border">
+                  <p className="text-3xl font-bold text-purple-600">{analytics.opened}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Opened</p>
+                </div>
+                <div className="text-center p-4 bg-background rounded-lg border">
+                  <p className="text-3xl font-bold text-orange-600">{analytics.clicked}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Clicked</p>
+                </div>
+                {analytics.bounced > 0 && (
+                  <div className="text-center p-4 bg-background rounded-lg border">
+                    <p className="text-3xl font-bold text-red-600">{analytics.bounced}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Bounced</p>
+                  </div>
+                )}
+                {analytics.complained > 0 && (
+                  <div className="text-center p-4 bg-background rounded-lg border">
+                    <p className="text-3xl font-bold text-red-600">{analytics.complained}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Complaints</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center p-12">
+                <Eye className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg text-muted-foreground mb-2">No analytics data available yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Analytics will appear here once the campaign is sent
+                </p>
+              </div>
             )}
-          </div>
-        </div>
+          </TabsContent>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Campaign Information */}
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Mail className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Campaign Information</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Campaign Name</label>
-                    <p className="mt-1">{campaign.name}</p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Subject Line</label>
-                    <p className="mt-1">{campaign.subject}</p>
-                  </div>
-
-                  <Separator />
-
-                  <div className="grid grid-cols-2 gap-4">
+          <TabsContent value="contacts" className="space-y-6 mt-6">
+            {associatedLists.length > 0 ? (
+              <div className="space-y-4">
+                {associatedLists.map((list) => (
+                  <div key={list.id} className="flex items-center justify-between p-4 bg-background rounded-lg border">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Created</label>
-                      <p className="mt-1 text-sm">{new Date(campaign.created_at).toLocaleString()}</p>
+                      <p className="font-medium text-lg">{list.name}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{list.description}</p>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Last Updated</label>
-                      <p className="mt-1 text-sm">{new Date(campaign.updated_at).toLocaleString()}</p>
+                    <div className="text-right">
+                      <p className="text-lg font-medium">{list.contact_count} contacts</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Created {new Date(list.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Email Settings */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <SettingsIcon className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Email Settings</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">From Name</label>
-                    <p className="mt-1">{campaign.settings.from_name}</p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">From Email</label>
-                    <p className="mt-1">{campaign.settings.from_email}</p>
-                  </div>
-
-                  {campaign.settings.reply_to && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Reply To</label>
-                      <p className="mt-1">{campaign.settings.reply_to}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Contact Lists & Analytics */}
-          <div className="space-y-6">
-            {/* Contact Lists */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Contact Lists</h3>
-                  <span className="text-sm text-muted-foreground">({associatedLists.length})</span>
-                </div>
-
-                {associatedLists.length > 0 ? (
-                  <div className="space-y-3">
-                    {associatedLists.map((list) => (
-                      <div key={list.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
-                        <div>
-                          <p className="font-medium">{list.name}</p>
-                          <p className="text-sm text-muted-foreground">{list.description}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{list.contact_count} contacts</p>
-                          <p className="text-xs text-muted-foreground">
-                            Created {new Date(list.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No contact lists associated with this campaign.</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Analytics */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Analytics</h3>
-                </div>
-
-                {analytics ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-background rounded-lg border">
-                      <p className="text-2xl font-bold text-blue-600">{analytics.sent}</p>
-                      <p className="text-sm text-muted-foreground">Sent</p>
-                    </div>
-                    <div className="text-center p-3 bg-background rounded-lg border">
-                      <p className="text-2xl font-bold text-green-600">{analytics.delivered}</p>
-                      <p className="text-sm text-muted-foreground">Delivered</p>
-                    </div>
-                    <div className="text-center p-3 bg-background rounded-lg border">
-                      <p className="text-2xl font-bold text-purple-600">{analytics.opened}</p>
-                      <p className="text-sm text-muted-foreground">Opened</p>
-                    </div>
-                    <div className="text-center p-3 bg-background rounded-lg border">
-                      <p className="text-2xl font-bold text-orange-600">{analytics.clicked}</p>
-                      <p className="text-sm text-muted-foreground">Clicked</p>
-                    </div>
-                    {analytics.bounced > 0 && (
-                      <div className="text-center p-3 bg-background rounded-lg border">
-                        <p className="text-2xl font-bold text-red-600">{analytics.bounced}</p>
-                        <p className="text-sm text-muted-foreground">Bounced</p>
-                      </div>
-                    )}
-                    {analytics.complained > 0 && (
-                      <div className="text-center p-3 bg-background rounded-lg border">
-                        <p className="text-2xl font-bold text-red-600">{analytics.complained}</p>
-                        <p className="text-sm text-muted-foreground">Complaints</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center p-8">
-                    <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">No analytics data available yet</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Analytics will appear here once the campaign is sent
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-12">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg text-muted-foreground mb-2">No contact lists associated</p>
+                <p className="text-sm text-muted-foreground">
+                  This campaign doesn't have any contact lists assigned yet
+                </p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   )

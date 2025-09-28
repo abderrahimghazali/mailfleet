@@ -153,6 +153,7 @@ pub async fn create_contact_list(
         name,
         description,
         created_at: Utc::now(),
+        updated_at: Utc::now(),
         contact_count: 0,
     };
 
@@ -162,6 +163,126 @@ pub async fn create_contact_list(
         .await
         .map_err(|e| e.to_string())?;
     Ok(contact_list)
+}
+
+#[tauri::command]
+pub async fn get_contact_list_by_id(
+    storage: State<'_, DatabaseState>,
+    id: String,
+) -> Result<Option<ContactList>, String> {
+    let storage = storage.lock().await;
+    let data = storage.get_contacts().await.map_err(|e| e.to_string())?;
+
+    let list_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    Ok(data.contact_lists.into_iter().find(|l| l.id == list_id))
+}
+
+#[tauri::command]
+pub async fn update_contact_list(
+    storage: State<'_, DatabaseState>,
+    id: String,
+    name: String,
+    description: String,
+) -> Result<ContactList, String> {
+    let storage = storage.lock().await;
+    let mut data = storage.get_contacts().await.map_err(|e| e.to_string())?;
+
+    let list_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+
+    if let Some(list) = data.contact_lists.iter_mut().find(|l| l.id == list_id) {
+        list.name = name;
+        list.description = description;
+        list.updated_at = Utc::now();
+
+        let updated_list = list.clone();
+
+        storage
+            .save_contacts(&data)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(updated_list)
+    } else {
+        Err("Contact list not found".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn delete_contact_list(
+    storage: State<'_, DatabaseState>,
+    id: String,
+) -> Result<(), String> {
+    let storage = storage.lock().await;
+    let mut data = storage.get_contacts().await.map_err(|e| e.to_string())?;
+
+    let list_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+
+    // Remove the contact list
+    let initial_len = data.contact_lists.len();
+    data.contact_lists.retain(|l| l.id != list_id);
+
+    if data.contact_lists.len() == initial_len {
+        return Err("Contact list not found".to_string());
+    }
+
+    // Remove the list ID from all contacts
+    for contact in &mut data.contacts {
+        contact.list_ids.retain(|&list_id_ref| list_id_ref != list_id);
+    }
+
+    storage
+        .save_contacts(&data)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_contacts_by_list_id(
+    storage: State<'_, DatabaseState>,
+    list_id: String,
+) -> Result<Vec<Contact>, String> {
+    let storage = storage.lock().await;
+    let data = storage.get_contacts().await.map_err(|e| e.to_string())?;
+
+    let list_uuid = Uuid::parse_str(&list_id).map_err(|e| e.to_string())?;
+    let filtered_contacts: Vec<Contact> = data.contacts
+        .into_iter()
+        .filter(|contact| contact.list_ids.contains(&list_uuid))
+        .collect();
+
+    Ok(filtered_contacts)
+}
+
+#[tauri::command]
+pub async fn delete_contact(
+    storage: State<'_, DatabaseState>,
+    id: String,
+) -> Result<(), String> {
+    let storage = storage.lock().await;
+    let mut data = storage.get_contacts().await.map_err(|e| e.to_string())?;
+    let contact_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+
+    // Remove the contact
+    let initial_len = data.contacts.len();
+    data.contacts.retain(|c| c.id != contact_id);
+
+    if data.contacts.len() == initial_len {
+        return Err("Contact not found".to_string());
+    }
+
+    // Update contact counts for all lists
+    for list in &mut data.contact_lists {
+        let contacts_in_list = data.contacts.iter().filter(|c| c.list_ids.contains(&list.id)).count();
+        list.contact_count = contacts_in_list;
+    }
+
+    storage
+        .save_contacts(&data)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
 }
 
 // Contact commands

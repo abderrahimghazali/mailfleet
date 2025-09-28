@@ -30,6 +30,7 @@ export interface ContactList {
   name: string;
   description: string;
   created_at: string;
+  updated_at: string;
   contact_count: number;
 }
 
@@ -116,6 +117,12 @@ export interface UpdateCampaignRequest {
 export interface CreateContactListRequest {
   name: string;
   description: string;
+}
+
+export interface UpdateContactListRequest {
+  id: string;
+  name?: string;
+  description?: string;
 }
 
 export interface CreateContactRequest {

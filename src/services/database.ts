@@ -9,6 +9,7 @@ import type {
   CreateCampaignRequest,
   UpdateCampaignRequest,
   CreateContactListRequest,
+  UpdateContactListRequest,
   CreateContactRequest,
   CreateTemplateRequest,
   UpdateTemplateRequest,
@@ -64,9 +65,29 @@ export class DatabaseService {
     });
   }
 
+  static async getContactListById(id: string): Promise<ContactList | null> {
+    return invoke('get_contact_list_by_id', { id });
+  }
+
+  static async updateContactList(request: UpdateContactListRequest): Promise<ContactList> {
+    return invoke('update_contact_list', {
+      id: request.id,
+      name: request.name,
+      description: request.description,
+    });
+  }
+
+  static async deleteContactList(id: string): Promise<void> {
+    return invoke('delete_contact_list', { id });
+  }
+
   // Contact operations
   static async getContacts(): Promise<Contact[]> {
     return invoke('get_contacts');
+  }
+
+  static async getContactsByListId(listId: string): Promise<Contact[]> {
+    return invoke('get_contacts_by_list_id', { listId });
   }
 
   static async createContact(request: CreateContactRequest): Promise<Contact> {
@@ -76,6 +97,10 @@ export class DatabaseService {
       lastName: request.last_name,
       listId: request.list_id,
     });
+  }
+
+  static async deleteContact(id: string): Promise<void> {
+    return invoke('delete_contact', { id });
   }
 
   // Template operations

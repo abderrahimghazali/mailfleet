@@ -9,6 +9,8 @@ export const route = {
   contactsImport: '/contacts/import',
   contactsValidate: '/contacts/validate',
   contactsCreateList: '/contacts/create-list',
+  contactListDetail: '/contacts/$contactListId',
+  contactListEdit: '/contacts/$contactListId/edit',
   templates: '/templates',
   templatesCreate: '/templates/create',
   analytics: '/analytics',

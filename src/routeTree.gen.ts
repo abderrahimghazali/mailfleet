@@ -11,19 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as CampaignsRouteImport } from './routes/campaigns'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AgentsRouteImport } from './routes/agents'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns/index'
 import { Route as TemplatesCreateRouteImport } from './routes/templates.create'
-import { Route as ContactsValidateRouteImport } from './routes/contacts.validate'
-import { Route as ContactsImportRouteImport } from './routes/contacts.import'
-import { Route as ContactsCreateListRouteImport } from './routes/contacts.create-list'
+import { Route as ContactsContactListIdRouteImport } from './routes/contacts_/$contactListId'
+import { Route as ContactsValidateRouteImport } from './routes/contacts/validate'
+import { Route as ContactsImportRouteImport } from './routes/contacts/import'
+import { Route as ContactsCreateListRouteImport } from './routes/contacts/create-list'
 import { Route as CampaignsCampaignIdRouteImport } from './routes/campaigns_/$campaignId'
 import { Route as CampaignsCreateRouteImport } from './routes/campaigns/create'
 import { Route as AnalyticsOverviewRouteImport } from './routes/analytics.overview'
+import { Route as ContactsContactListIdEditRouteImport } from './routes/contacts/$contactListId/edit'
 import { Route as CampaignsCampaignIdEditRouteImport } from './routes/campaigns/$campaignId/edit'
 
 const TemplatesRoute = TemplatesRouteImport.update({
@@ -34,11 +36,6 @@ const TemplatesRoute = TemplatesRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactsRoute = ContactsRouteImport.update({
-  id: '/contacts',
-  path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CampaignsRoute = CampaignsRouteImport.update({
@@ -61,6 +58,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactsIndexRoute = ContactsIndexRouteImport.update({
+  id: '/contacts/',
+  path: '/contacts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CampaignsIndexRoute = CampaignsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -71,20 +73,25 @@ const TemplatesCreateRoute = TemplatesCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => TemplatesRoute,
 } as any)
+const ContactsContactListIdRoute = ContactsContactListIdRouteImport.update({
+  id: '/contacts_/$contactListId',
+  path: '/contacts/$contactListId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactsValidateRoute = ContactsValidateRouteImport.update({
-  id: '/validate',
-  path: '/validate',
-  getParentRoute: () => ContactsRoute,
+  id: '/contacts/validate',
+  path: '/contacts/validate',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ContactsImportRoute = ContactsImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => ContactsRoute,
+  id: '/contacts/import',
+  path: '/contacts/import',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ContactsCreateListRoute = ContactsCreateListRouteImport.update({
-  id: '/create-list',
-  path: '/create-list',
-  getParentRoute: () => ContactsRoute,
+  id: '/contacts/create-list',
+  path: '/contacts/create-list',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CampaignsCampaignIdRoute = CampaignsCampaignIdRouteImport.update({
   id: '/campaigns_/$campaignId',
@@ -101,6 +108,12 @@ const AnalyticsOverviewRoute = AnalyticsOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => AnalyticsRoute,
 } as any)
+const ContactsContactListIdEditRoute =
+  ContactsContactListIdEditRouteImport.update({
+    id: '/contacts/$contactListId/edit',
+    path: '/contacts/$contactListId/edit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CampaignsCampaignIdEditRoute = CampaignsCampaignIdEditRouteImport.update({
   id: '/$campaignId/edit',
   path: '/$campaignId/edit',
@@ -112,7 +125,6 @@ export interface FileRoutesByFullPath {
   '/agents': typeof AgentsRoute
   '/analytics': typeof AnalyticsRouteWithChildren
   '/campaigns': typeof CampaignsRouteWithChildren
-  '/contacts': typeof ContactsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRouteWithChildren
   '/analytics/overview': typeof AnalyticsOverviewRoute
@@ -121,15 +133,17 @@ export interface FileRoutesByFullPath {
   '/contacts/create-list': typeof ContactsCreateListRoute
   '/contacts/import': typeof ContactsImportRoute
   '/contacts/validate': typeof ContactsValidateRoute
+  '/contacts/$contactListId': typeof ContactsContactListIdRoute
   '/templates/create': typeof TemplatesCreateRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/contacts': typeof ContactsIndexRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
+  '/contacts/$contactListId/edit': typeof ContactsContactListIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agents': typeof AgentsRoute
   '/analytics': typeof AnalyticsRouteWithChildren
-  '/contacts': typeof ContactsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRouteWithChildren
   '/analytics/overview': typeof AnalyticsOverviewRoute
@@ -138,9 +152,12 @@ export interface FileRoutesByTo {
   '/contacts/create-list': typeof ContactsCreateListRoute
   '/contacts/import': typeof ContactsImportRoute
   '/contacts/validate': typeof ContactsValidateRoute
+  '/contacts/$contactListId': typeof ContactsContactListIdRoute
   '/templates/create': typeof TemplatesCreateRoute
   '/campaigns': typeof CampaignsIndexRoute
+  '/contacts': typeof ContactsIndexRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
+  '/contacts/$contactListId/edit': typeof ContactsContactListIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -148,7 +165,6 @@ export interface FileRoutesById {
   '/agents': typeof AgentsRoute
   '/analytics': typeof AnalyticsRouteWithChildren
   '/campaigns': typeof CampaignsRouteWithChildren
-  '/contacts': typeof ContactsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRouteWithChildren
   '/analytics/overview': typeof AnalyticsOverviewRoute
@@ -157,9 +173,12 @@ export interface FileRoutesById {
   '/contacts/create-list': typeof ContactsCreateListRoute
   '/contacts/import': typeof ContactsImportRoute
   '/contacts/validate': typeof ContactsValidateRoute
+  '/contacts_/$contactListId': typeof ContactsContactListIdRoute
   '/templates/create': typeof TemplatesCreateRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/contacts/': typeof ContactsIndexRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
+  '/contacts/$contactListId/edit': typeof ContactsContactListIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -168,7 +187,6 @@ export interface FileRouteTypes {
     | '/agents'
     | '/analytics'
     | '/campaigns'
-    | '/contacts'
     | '/settings'
     | '/templates'
     | '/analytics/overview'
@@ -177,15 +195,17 @@ export interface FileRouteTypes {
     | '/contacts/create-list'
     | '/contacts/import'
     | '/contacts/validate'
+    | '/contacts/$contactListId'
     | '/templates/create'
     | '/campaigns/'
+    | '/contacts'
     | '/campaigns/$campaignId/edit'
+    | '/contacts/$contactListId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/agents'
     | '/analytics'
-    | '/contacts'
     | '/settings'
     | '/templates'
     | '/analytics/overview'
@@ -194,16 +214,18 @@ export interface FileRouteTypes {
     | '/contacts/create-list'
     | '/contacts/import'
     | '/contacts/validate'
+    | '/contacts/$contactListId'
     | '/templates/create'
     | '/campaigns'
+    | '/contacts'
     | '/campaigns/$campaignId/edit'
+    | '/contacts/$contactListId/edit'
   id:
     | '__root__'
     | '/'
     | '/agents'
     | '/analytics'
     | '/campaigns'
-    | '/contacts'
     | '/settings'
     | '/templates'
     | '/analytics/overview'
@@ -212,9 +234,12 @@ export interface FileRouteTypes {
     | '/contacts/create-list'
     | '/contacts/import'
     | '/contacts/validate'
+    | '/contacts_/$contactListId'
     | '/templates/create'
     | '/campaigns/'
+    | '/contacts/'
     | '/campaigns/$campaignId/edit'
+    | '/contacts/$contactListId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -222,10 +247,15 @@ export interface RootRouteChildren {
   AgentsRoute: typeof AgentsRoute
   AnalyticsRoute: typeof AnalyticsRouteWithChildren
   CampaignsRoute: typeof CampaignsRouteWithChildren
-  ContactsRoute: typeof ContactsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   TemplatesRoute: typeof TemplatesRouteWithChildren
   CampaignsCampaignIdRoute: typeof CampaignsCampaignIdRoute
+  ContactsCreateListRoute: typeof ContactsCreateListRoute
+  ContactsImportRoute: typeof ContactsImportRoute
+  ContactsValidateRoute: typeof ContactsValidateRoute
+  ContactsContactListIdRoute: typeof ContactsContactListIdRoute
+  ContactsIndexRoute: typeof ContactsIndexRoute
+  ContactsContactListIdEditRoute: typeof ContactsContactListIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -242,13 +272,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contacts': {
-      id: '/contacts'
-      path: '/contacts'
-      fullPath: '/contacts'
-      preLoaderRoute: typeof ContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/campaigns': {
@@ -279,6 +302,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contacts/': {
+      id: '/contacts/'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/campaigns/': {
       id: '/campaigns/'
       path: '/'
@@ -293,26 +323,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TemplatesCreateRouteImport
       parentRoute: typeof TemplatesRoute
     }
+    '/contacts_/$contactListId': {
+      id: '/contacts_/$contactListId'
+      path: '/contacts/$contactListId'
+      fullPath: '/contacts/$contactListId'
+      preLoaderRoute: typeof ContactsContactListIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contacts/validate': {
       id: '/contacts/validate'
-      path: '/validate'
+      path: '/contacts/validate'
       fullPath: '/contacts/validate'
       preLoaderRoute: typeof ContactsValidateRouteImport
-      parentRoute: typeof ContactsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/contacts/import': {
       id: '/contacts/import'
-      path: '/import'
+      path: '/contacts/import'
       fullPath: '/contacts/import'
       preLoaderRoute: typeof ContactsImportRouteImport
-      parentRoute: typeof ContactsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/contacts/create-list': {
       id: '/contacts/create-list'
-      path: '/create-list'
+      path: '/contacts/create-list'
       fullPath: '/contacts/create-list'
       preLoaderRoute: typeof ContactsCreateListRouteImport
-      parentRoute: typeof ContactsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/campaigns_/$campaignId': {
       id: '/campaigns_/$campaignId'
@@ -334,6 +371,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/analytics/overview'
       preLoaderRoute: typeof AnalyticsOverviewRouteImport
       parentRoute: typeof AnalyticsRoute
+    }
+    '/contacts/$contactListId/edit': {
+      id: '/contacts/$contactListId/edit'
+      path: '/contacts/$contactListId/edit'
+      fullPath: '/contacts/$contactListId/edit'
+      preLoaderRoute: typeof ContactsContactListIdEditRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/campaigns/$campaignId/edit': {
       id: '/campaigns/$campaignId/edit'
@@ -373,22 +417,6 @@ const CampaignsRouteWithChildren = CampaignsRoute._addFileChildren(
   CampaignsRouteChildren,
 )
 
-interface ContactsRouteChildren {
-  ContactsCreateListRoute: typeof ContactsCreateListRoute
-  ContactsImportRoute: typeof ContactsImportRoute
-  ContactsValidateRoute: typeof ContactsValidateRoute
-}
-
-const ContactsRouteChildren: ContactsRouteChildren = {
-  ContactsCreateListRoute: ContactsCreateListRoute,
-  ContactsImportRoute: ContactsImportRoute,
-  ContactsValidateRoute: ContactsValidateRoute,
-}
-
-const ContactsRouteWithChildren = ContactsRoute._addFileChildren(
-  ContactsRouteChildren,
-)
-
 interface TemplatesRouteChildren {
   TemplatesCreateRoute: typeof TemplatesCreateRoute
 }
@@ -406,10 +434,15 @@ const rootRouteChildren: RootRouteChildren = {
   AgentsRoute: AgentsRoute,
   AnalyticsRoute: AnalyticsRouteWithChildren,
   CampaignsRoute: CampaignsRouteWithChildren,
-  ContactsRoute: ContactsRouteWithChildren,
   SettingsRoute: SettingsRoute,
   TemplatesRoute: TemplatesRouteWithChildren,
   CampaignsCampaignIdRoute: CampaignsCampaignIdRoute,
+  ContactsCreateListRoute: ContactsCreateListRoute,
+  ContactsImportRoute: ContactsImportRoute,
+  ContactsValidateRoute: ContactsValidateRoute,
+  ContactsContactListIdRoute: ContactsContactListIdRoute,
+  ContactsIndexRoute: ContactsIndexRoute,
+  ContactsContactListIdEditRoute: ContactsContactListIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

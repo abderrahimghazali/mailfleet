@@ -2,12 +2,11 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import { useEffect, useState, type FormEvent } from 'react'
 import { DatabaseService } from '@/services/database'
-import type { Campaign, UpdateCampaignRequest, CampaignStatus } from '@/types/database'
+import type { Campaign, UpdateCampaignRequest } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Save, X } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -28,8 +27,7 @@ function EditCampaign() {
     name: '',
     subject: '',
     from_email: '',
-    from_name: '',
-    status: 'Draft' as CampaignStatus
+    from_name: ''
   })
 
   useEffect(() => {
@@ -43,8 +41,7 @@ function EditCampaign() {
             name: data.name,
             subject: data.subject,
             from_email: data.settings.from_email,
-            from_name: data.settings.from_name,
-            status: data.status
+            from_name: data.settings.from_name
           })
         } else {
           setError('Campaign not found')
@@ -61,15 +58,7 @@ function EditCampaign() {
   }, [campaignId])
 
   const handleInputChange = (field: string, value: string) => {
-    if (field === 'status') {
-      // Ensure status is a valid CampaignStatus
-      const validStatuses: CampaignStatus[] = ['Draft', 'Scheduled', 'Sending', 'Sent', 'Paused']
-      if (validStatuses.includes(value as CampaignStatus)) {
-        setFormData(prev => ({ ...prev, [field]: value as CampaignStatus }))
-      }
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }))
-    }
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -88,17 +77,10 @@ function EditCampaign() {
         throw new Error('Subject line is required')
       }
 
-      // Validate status
-      const validStatuses: CampaignStatus[] = ['Draft', 'Scheduled', 'Sending', 'Sent', 'Paused']
-      if (!validStatuses.includes(formData.status)) {
-        throw new Error(`Invalid status: ${formData.status}. Must be one of: ${validStatuses.join(', ')}`)
-      }
-
       const updateRequest: UpdateCampaignRequest = {
         id: campaign.id,
         name: formData.name.trim(),
-        subject: formData.subject.trim(),
-        status: formData.status
+        subject: formData.subject.trim()
       }
 
       await DatabaseService.updateCampaign(updateRequest)
@@ -156,7 +138,7 @@ function EditCampaign() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Campaign Name</Label>
                   <Input
@@ -169,22 +151,6 @@ function EditCampaign() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Draft">Draft</SelectItem>
-                      <SelectItem value="Scheduled">Scheduled</SelectItem>
-                      <SelectItem value="Sending">Sending</SelectItem>
-                      <SelectItem value="Sent">Sent</SelectItem>
-                      <SelectItem value="Paused">Paused</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="subject">Subject Line</Label>
                   <Input
                     id="subject"
@@ -195,35 +161,37 @@ function EditCampaign() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="from_name">From Name</Label>
-                  <Input
-                    id="from_name"
-                    value={formData.from_name}
-                    onChange={(e) => handleInputChange('from_name', e.target.value)}
-                    placeholder="Enter sender name"
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    From settings cannot be changed after campaign creation
-                  </p>
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="from_name">From Name</Label>
+                    <Input
+                      id="from_name"
+                      value={formData.from_name}
+                      onChange={(e) => handleInputChange('from_name', e.target.value)}
+                      placeholder="Enter sender name"
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      From settings cannot be changed after campaign creation
+                    </p>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="from_email">From Email</Label>
-                  <Input
-                    id="from_email"
-                    value={formData.from_email}
-                    onChange={(e) => handleInputChange('from_email', e.target.value)}
-                    placeholder="Enter sender email"
-                    type="email"
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    From settings cannot be changed after campaign creation
-                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="from_email">From Email</Label>
+                    <Input
+                      id="from_email"
+                      value={formData.from_email}
+                      onChange={(e) => handleInputChange('from_email', e.target.value)}
+                      placeholder="Enter sender email"
+                      type="email"
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      From settings cannot be changed after campaign creation
+                    </p>
+                  </div>
                 </div>
               </div>
 
