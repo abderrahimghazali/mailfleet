@@ -5,12 +5,25 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
+import { useEffect } from 'react'
+import { DatabaseService } from '@/services/database'
 
 export const Route = createRootRoute({
   component: RootLayout,
 })
 
 function RootLayout() {
+  // Load and apply stored theme on startup
+  useEffect(() => {
+    DatabaseService.getSettings().then((settings) => {
+      if (settings.app_settings.theme === 'Dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    }).catch(console.error)
+  }, [])
+
   return (
     <SidebarProvider>
       <AppSidebar />

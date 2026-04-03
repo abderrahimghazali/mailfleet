@@ -6,6 +6,7 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::database::{models::*, storage::DatabaseStorage};
+use crate::email::{self, sender::CampaignSendResult};
 
 type DatabaseState = Arc<Mutex<DatabaseStorage>>;
 
@@ -481,4 +482,306 @@ pub async fn get_campaign_analytics(
         .campaign_analytics
         .into_iter()
         .find(|a| a.campaign_id == campaign_uuid))
+}
+
+#[tauri::command]
+pub async fn get_all_analytics(
+    storage: State<'_, DatabaseState>,
+) -> Result<Vec<CampaignAnalytics>, String> {
+    let storage = storage.lock().await;
+    let data = storage.get_analytics().await.map_err(|e| e.to_string())?;
+    Ok(data.campaign_analytics)
+}
+
+// Template commands
+#[tauri::command]
+pub async fn get_template_by_id(
+    storage: State<'_, DatabaseState>,
+    id: String,
+) -> Result<Option<Template>, String> {
+    let storage = storage.lock().await;
+    let data = storage.get_templates().await.map_err(|e| e.to_string())?;
+    let template_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    Ok(data.templates.into_iter().find(|t| t.id == template_id))
+}
+
+#[tauri::command]
+pub async fn delete_template(storage: State<'_, DatabaseState>, id: String) -> Result<(), String> {
+    let storage = storage.lock().await;
+    let mut data = storage.get_templates().await.map_err(|e| e.to_string())?;
+    let template_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    data.templates.retain(|t| t.id != template_id);
+    storage
+        .save_templates(&data)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// Campaign enhancement commands
+#[tauri::command]
+pub async fn update_campaign_contact_lists(
+    storage: State<'_, DatabaseState>,
+    id: String,
+    list_ids: Vec<String>,
+) -> Result<Campaign, String> {
+    let storage = storage.lock().await;
+    let mut data = storage.get_campaigns().await.map_err(|e| e.to_string())?;
+    let campaign_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+
+    let parsed_ids: Vec<Uuid> = list_ids
+        .iter()
+        .map(|s| Uuid::parse_str(s))
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    if let Some(campaign) = data.campaigns.iter_mut().find(|c| c.id == campaign_id) {
+        campaign.contact_list_ids = parsed_ids;
+        campaign.updated_at = Utc::now();
+        let updated = campaign.clone();
+        storage
+            .save_campaigns(&data)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(updated)
+    } else {
+        Err("Campaign not found".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn update_campaign_status(
+    storage: State<'_, DatabaseState>,
+    id: String,
+    status: String,
+    scheduled_at: Option<String>,
+) -> Result<Campaign, String> {
+    let storage = storage.lock().await;
+    let mut data = storage.get_campaigns().await.map_err(|e| e.to_string())?;
+    let campaign_id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+
+    if let Some(campaign) = data.campaigns.iter_mut().find(|c| c.id == campaign_id) {
+        campaign.status = match status.to_lowercase().as_str() {
+            "draft" => CampaignStatus::Draft,
+            "scheduled" => CampaignStatus::Scheduled,
+            "sending" => CampaignStatus::Sending,
+            "sent" => CampaignStatus::Sent,
+            "paused" => CampaignStatus::Paused,
+            _ => return Err("Invalid status".to_string()),
+        };
+
+        if let Some(ref at) = scheduled_at {
+            campaign.scheduled_at = Some(
+                chrono::DateTime::parse_from_rfc3339(at)
+                    .map_err(|e| format!("Invalid date: {}", e))?
+                    .with_timezone(&Utc),
+            );
+        }
+
+        campaign.updated_at = Utc::now();
+        let updated = campaign.clone();
+        storage
+            .save_campaigns(&data)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(updated)
+    } else {
+        Err("Campaign not found".to_string())
+    }
+}
+
+// SES commands
+#[tauri::command]
+pub async fn verify_ses_credentials(
+    access_key: String,
+    secret_key: String,
+    region: String,
+) -> Result<bool, String> {
+    let client = email::ses::build_ses_client(&access_key, &secret_key, &region)
+        .await
+        .map_err(|e| format!("Failed to build SES client: {}", e))?;
+
+    email::ses::verify_credentials(&client)
+        .await
+        .map_err(|e| format!("SES verification failed: {}", e))?;
+
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn send_test_email(
+    storage: State<'_, DatabaseState>,
+    to: String,
+    subject: String,
+    html_content: String,
+    from_email: String,
+    from_name: String,
+) -> Result<String, String> {
+    let storage = storage.lock().await;
+    let settings = storage.get_settings().await.map_err(|e| e.to_string())?;
+
+    let access_key = settings
+        .ses_settings
+        .access_key_id
+        .as_ref()
+        .ok_or("AWS SES Access Key not configured")?;
+    let secret_key = settings
+        .ses_settings
+        .secret_access_key
+        .as_ref()
+        .ok_or("AWS SES Secret Key not configured")?;
+
+    let client =
+        email::ses::build_ses_client(access_key, secret_key, &settings.ses_settings.region)
+            .await
+            .map_err(|e| format!("Failed to build SES client: {}", e))?;
+
+    let from_address = format!("{} <{}>", from_name, from_email);
+
+    let message_id =
+        email::ses::send_email(&client, &from_address, &to, &subject, &html_content, None)
+            .await
+            .map_err(|e| format!("Failed to send test email: {}", e))?;
+
+    Ok(message_id)
+}
+
+#[tauri::command]
+pub async fn send_campaign(
+    storage: State<'_, DatabaseState>,
+    campaign_id: String,
+) -> Result<CampaignSendResult, String> {
+    let storage_ref = storage.lock().await;
+    let campaign_uuid = Uuid::parse_str(&campaign_id).map_err(|e| e.to_string())?;
+
+    email::sender::send_campaign_emails(&storage_ref, campaign_uuid)
+        .await
+        .map_err(|e| format!("Campaign send failed: {}", e))
+}
+
+// CSV Import
+#[tauri::command]
+pub async fn import_contacts_csv(
+    storage: State<'_, DatabaseState>,
+    file_path: String,
+    list_id: String,
+    column_mapping: String,
+    has_header: bool,
+) -> Result<ImportResult, String> {
+    let storage = storage.lock().await;
+    let list_uuid = Uuid::parse_str(&list_id).map_err(|e| e.to_string())?;
+
+    // Parse column mapping
+    let mapping: std::collections::HashMap<String, usize> =
+        serde_json::from_str(&column_mapping)
+            .map_err(|e| format!("Invalid column mapping: {}", e))?;
+
+    let email_col = mapping
+        .get("email")
+        .copied()
+        .ok_or("Email column mapping is required")?;
+    let first_name_col = mapping.get("first_name").copied();
+    let last_name_col = mapping.get("last_name").copied();
+
+    // Read file
+    let content = tokio::fs::read_to_string(&file_path)
+        .await
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(has_header)
+        .from_reader(content.as_bytes());
+
+    let mut contacts_data = storage.get_contacts().await.map_err(|e| e.to_string())?;
+
+    // Build set of existing emails in this list for dedup
+    let existing_emails: std::collections::HashSet<String> = contacts_data
+        .contacts
+        .iter()
+        .filter(|c| c.list_ids.contains(&list_uuid))
+        .map(|c| c.email.to_lowercase())
+        .collect();
+
+    let mut imported: u32 = 0;
+    let mut skipped: u32 = 0;
+    let mut errors: Vec<String> = Vec::new();
+
+    for (row_idx, record) in reader.records().enumerate() {
+        let record = match record {
+            Ok(r) => r,
+            Err(e) => {
+                errors.push(format!("Row {}: {}", row_idx + 1, e));
+                continue;
+            }
+        };
+
+        let email = match record.get(email_col) {
+            Some(e) if !e.trim().is_empty() => e.trim().to_string(),
+            _ => {
+                errors.push(format!("Row {}: missing email", row_idx + 1));
+                continue;
+            }
+        };
+
+        // Basic email validation
+        if !email.contains('@') || !email.contains('.') {
+            errors.push(format!("Row {}: invalid email '{}'", row_idx + 1, email));
+            continue;
+        }
+
+        // Check duplicate
+        if existing_emails.contains(&email.to_lowercase()) {
+            skipped += 1;
+            continue;
+        }
+
+        let first_name = first_name_col
+            .and_then(|col| record.get(col))
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+
+        let last_name = last_name_col
+            .and_then(|col| record.get(col))
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+
+        let contact = Contact {
+            id: Uuid::new_v4(),
+            email,
+            first_name,
+            last_name,
+            list_ids: vec![list_uuid],
+            status: ContactStatus::Active,
+            created_at: Utc::now(),
+            custom_fields: std::collections::HashMap::new(),
+        };
+
+        contacts_data.contacts.push(contact);
+        imported += 1;
+    }
+
+    // Update contact count
+    if let Some(list) = contacts_data
+        .contact_lists
+        .iter_mut()
+        .find(|l| l.id == list_uuid)
+    {
+        let count = contacts_data
+            .contacts
+            .iter()
+            .filter(|c| c.list_ids.contains(&list_uuid))
+            .count();
+        list.contact_count = count;
+    }
+
+    storage
+        .save_contacts(&contacts_data)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(ImportResult {
+        imported,
+        skipped,
+        errors,
+    })
 }

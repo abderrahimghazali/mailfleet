@@ -5,8 +5,25 @@ import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { DatabaseService } from '@/services/database'
 import type { Template } from '@/types/database'
-import { FileText, Plus, Eye, Edit3 } from 'lucide-react'
+import { FileText, Plus, Eye, Edit3, Trash2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from 'sonner'
 
 export const Route = createFileRoute(route.templates)({
   component: Templates,
@@ -15,21 +32,37 @@ export const Route = createFileRoute(route.templates)({
 function Templates() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null)
+  const [deleteTemplate, setDeleteTemplate] = useState<Template | null>(null)
 
   useEffect(() => {
-    async function loadTemplates() {
-      try {
-        const data = await DatabaseService.getTemplates()
-        setTemplates(data)
-      } catch (error) {
-        console.error('Failed to load templates:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadTemplates()
   }, [])
+
+  async function loadTemplates() {
+    try {
+      const data = await DatabaseService.getTemplates()
+      setTemplates(data)
+    } catch (error) {
+      console.error('Failed to load templates:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTemplate) return
+    try {
+      await DatabaseService.deleteTemplate(deleteTemplate.id)
+      setTemplates(prev => prev.filter(t => t.id !== deleteTemplate.id))
+      toast.success('Template deleted')
+    } catch (error) {
+      console.error('Failed to delete template:', error)
+      toast.error('Failed to delete template')
+    } finally {
+      setDeleteTemplate(null)
+    }
+  }
 
   const breadcrumbs = [
     { label: "Dashboard", href: route.dashboard },
@@ -68,11 +101,11 @@ function Templates() {
               <div key={template.id} className="bg-muted/50 rounded-xl overflow-hidden">
                 {/* Template Preview */}
                 <div className="h-32 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
-                  <div className="h-full bg-white rounded shadow-sm p-3 overflow-hidden">
+                  <div className="h-full bg-white dark:bg-zinc-900 rounded shadow-sm p-3 overflow-hidden">
                     <div className="space-y-2">
-                      <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-2 bg-gray-200 rounded w-1/2"></div>
-                      <div className="h-2 bg-gray-200 rounded w-5/6"></div>
+                      <div className="h-2 bg-gray-200 dark:bg-zinc-700 rounded w-3/4"></div>
+                      <div className="h-2 bg-gray-200 dark:bg-zinc-700 rounded w-1/2"></div>
+                      <div className="h-2 bg-gray-200 dark:bg-zinc-700 rounded w-5/6"></div>
                     </div>
                   </div>
                 </div>
@@ -95,14 +128,29 @@ function Templates() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-sm border rounded hover:bg-accent">
-                      <Eye className="h-3 w-3" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setPreviewTemplate(template)}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
                       Preview
-                    </button>
-                    <button className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm border rounded hover:bg-accent">
-                      <Edit3 className="h-3 w-3" />
-                      Edit
-                    </button>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/templates/$templateId/edit" params={{ templateId: template.id }}>
+                        <Edit3 className="h-3 w-3 mr-1" />
+                        Edit
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setDeleteTemplate(template)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -149,6 +197,44 @@ function Templates() {
           </div>
         )}
       </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{previewTemplate?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Subject: {previewTemplate?.subject}
+            </p>
+            <div className="border rounded-lg p-4 bg-white dark:bg-zinc-900">
+              <div
+                dangerouslySetInnerHTML={{ __html: previewTemplate?.html_content || '' }}
+                className="prose dark:prose-invert max-w-none"
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTemplate} onOpenChange={() => setDeleteTemplate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteTemplate?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

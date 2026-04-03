@@ -25,6 +25,7 @@ import { Route as ContactsCreateListRouteImport } from './routes/contacts/create
 import { Route as CampaignsCampaignIdRouteImport } from './routes/campaigns_/$campaignId'
 import { Route as CampaignsCreateRouteImport } from './routes/campaigns/create'
 import { Route as AnalyticsOverviewRouteImport } from './routes/analytics.overview'
+import { Route as TemplatesTemplateIdEditRouteImport } from './routes/templates_.$templateId.edit'
 import { Route as ContactsContactListIdEditRouteImport } from './routes/contacts/$contactListId/edit'
 import { Route as CampaignsCampaignIdEditRouteImport } from './routes/campaigns/$campaignId/edit'
 
@@ -108,6 +109,11 @@ const AnalyticsOverviewRoute = AnalyticsOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => AnalyticsRoute,
 } as any)
+const TemplatesTemplateIdEditRoute = TemplatesTemplateIdEditRouteImport.update({
+  id: '/templates_/$templateId/edit',
+  path: '/templates/$templateId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactsContactListIdEditRoute =
   ContactsContactListIdEditRouteImport.update({
     id: '/contacts/$contactListId/edit',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof ContactsIndexRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
   '/contacts/$contactListId/edit': typeof ContactsContactListIdEditRoute
+  '/templates/$templateId/edit': typeof TemplatesTemplateIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof ContactsIndexRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
   '/contacts/$contactListId/edit': typeof ContactsContactListIdEditRoute
+  '/templates/$templateId/edit': typeof TemplatesTemplateIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/contacts/': typeof ContactsIndexRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
   '/contacts/$contactListId/edit': typeof ContactsContactListIdEditRoute
+  '/templates_/$templateId/edit': typeof TemplatesTemplateIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/campaigns/$campaignId/edit'
     | '/contacts/$contactListId/edit'
+    | '/templates/$templateId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/campaigns/$campaignId/edit'
     | '/contacts/$contactListId/edit'
+    | '/templates/$templateId/edit'
   id:
     | '__root__'
     | '/'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/contacts/'
     | '/campaigns/$campaignId/edit'
     | '/contacts/$contactListId/edit'
+    | '/templates_/$templateId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   ContactsContactListIdRoute: typeof ContactsContactListIdRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
   ContactsContactListIdEditRoute: typeof ContactsContactListIdEditRoute
+  TemplatesTemplateIdEditRoute: typeof TemplatesTemplateIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalyticsOverviewRouteImport
       parentRoute: typeof AnalyticsRoute
     }
+    '/templates_/$templateId/edit': {
+      id: '/templates_/$templateId/edit'
+      path: '/templates/$templateId/edit'
+      fullPath: '/templates/$templateId/edit'
+      preLoaderRoute: typeof TemplatesTemplateIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contacts/$contactListId/edit': {
       id: '/contacts/$contactListId/edit'
       path: '/contacts/$contactListId/edit'
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactsContactListIdRoute: ContactsContactListIdRoute,
   ContactsIndexRoute: ContactsIndexRoute,
   ContactsContactListIdEditRoute: ContactsContactListIdEditRoute,
+  TemplatesTemplateIdEditRoute: TemplatesTemplateIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

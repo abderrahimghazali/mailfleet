@@ -137,13 +137,11 @@ impl DatabaseStorage {
         self.read_file("analytics.json").await
     }
 
-    #[allow(dead_code)]
     pub async fn save_analytics(&self, data: &AnalyticsData) -> Result<()> {
         self.write_file("analytics.json", data).await
     }
 
     // Suppression operations
-    #[allow(dead_code)]
     pub async fn get_suppression(&self) -> Result<SuppressionData> {
         self.read_file("suppression.json").await
     }

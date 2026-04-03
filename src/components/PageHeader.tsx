@@ -7,7 +7,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+
 import { Link } from "@tanstack/react-router"
 import { Home } from "lucide-react"
 

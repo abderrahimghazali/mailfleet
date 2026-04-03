@@ -13,6 +13,7 @@ export const route = {
   contactListEdit: '/contacts/$contactListId/edit',
   templates: '/templates',
   templatesCreate: '/templates/create',
+  templateEdit: '/templates/$templateId/edit',
   analytics: '/analytics',
   analyticsOverview: '/analytics/overview',
   settings: '/settings',

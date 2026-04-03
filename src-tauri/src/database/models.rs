@@ -149,6 +149,13 @@ pub enum SuppressionReason {
     Complained,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportResult {
+    pub imported: u32,
+    pub skipped: u32,
+    pub errors: Vec<String>,
+}
+
 // Database container structs
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CampaignsData {

@@ -100,6 +100,24 @@ export interface SuppressedEmail {
   campaign_id?: string;
 }
 
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  errors: string[];
+}
+
+export interface CampaignSendResult {
+  sent: number;
+  skipped: number;
+  errors: string[];
+}
+
+export interface ColumnMapping {
+  email: number;
+  first_name?: number;
+  last_name?: number;
+}
+
 // API Request/Response types
 export interface CreateCampaignRequest {
   name: string;
@@ -114,6 +132,8 @@ export interface UpdateCampaignRequest {
   subject?: string;
   content?: string;
   status?: CampaignStatus;
+  contact_list_ids?: string[];
+  scheduled_at?: string;
 }
 
 export interface CreateContactListRequest {

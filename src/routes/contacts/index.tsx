@@ -1,21 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PageHeader } from '@/components/PageHeader'
 import { route } from '@/constants/routes'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { DatabaseService } from '@/services/database'
 import type { ContactList } from '@/types/database'
-import { Users, Plus, Upload, CheckCircle, Eye, Edit, Trash2 } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Users, Plus, Upload, CheckCircle, Eye, Edit, Trash2, MoreHorizontal, ArrowUpDown } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { toast } from 'sonner'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,16 +25,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { DataTable } from "@/components/ui/data-table"
 
 export const Route = createFileRoute('/contacts/')({
   component: Contacts,
 })
 
 function Contacts() {
+  const navigate = useNavigate()
   const [contactLists, setContactLists] = useState<ContactList[]>([])
   const [loading, setLoading] = useState(true)
+  const [deletingList, setDeletingList] = useState<ContactList | null>(null)
 
   useEffect(() => {
     async function loadData() {
@@ -47,7 +49,6 @@ function Contacts() {
         setLoading(false)
       }
     }
-
     loadData()
   }, [])
 
@@ -58,25 +59,119 @@ function Contacts() {
 
   const totalContacts = contactLists.reduce((sum, list) => sum + list.contact_count, 0)
 
-  const handleDeleteContactList = async (listId: string, listName: string) => {
+  const handleDeleteContactList = async () => {
+    if (!deletingList) return
     try {
-      await DatabaseService.deleteContactList(listId)
-
-      // Remove from local state
-      setContactLists(prev => prev.filter(list => list.id !== listId))
-
-      toast.success(`Contact list "${listName}" deleted successfully`)
+      await DatabaseService.deleteContactList(deletingList.id)
+      setContactLists(prev => prev.filter(list => list.id !== deletingList.id))
+      toast.success(`Contact list "${deletingList.name}" deleted`)
     } catch (error) {
       console.error('Failed to delete contact list:', error)
       toast.error('Failed to delete contact list')
+    } finally {
+      setDeletingList(null)
     }
   }
+
+  const columns: ColumnDef<ContactList>[] = [
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          List Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <div className="text-muted-foreground truncate max-w-[250px]">
+          {row.original.description || 'No description'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "contact_count",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Contacts
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => <div className="font-medium">{row.original.contact_count}</div>,
+    },
+    {
+      accessorKey: "created_at",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Created
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="text-muted-foreground">
+          {new Date(row.original.created_at).toLocaleDateString()}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const list = row.original
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate({ to: '/contacts/$contactListId', params: { contactListId: list.id } })}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: '/contacts/$contactListId/edit', params: { contactListId: list.id } })}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setDeletingList(list)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
 
   return (
     <>
       <PageHeader breadcrumbs={breadcrumbs} />
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        {/* Header Actions */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Contacts</h1>
@@ -84,7 +179,6 @@ function Contacts() {
               {totalContacts} total contacts across {contactLists.length} lists
             </p>
           </div>
-
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link to={route.contactsValidate}>
@@ -107,94 +201,18 @@ function Contacts() {
           </div>
         </div>
 
-        {/* Contact Lists */}
+        {/* Data Table */}
         {loading ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Loading contact lists...</p>
           </div>
         ) : contactLists.length > 0 ? (
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>List Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Contacts</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contactLists.map((list) => (
-                  <TableRow key={list.id}>
-                    <TableCell className="font-medium">{list.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {list.description || 'No description provided'}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{list.contact_count}</span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(list.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right w-40">
-                      <div className="flex items-center gap-1 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-blue-50"
-                          asChild
-                        >
-                          <Link to="/contacts/$contactListId" params={{ contactListId: list.id }}>
-                            <Eye className="h-4 w-4 text-blue-600" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-yellow-50"
-                          asChild
-                        >
-                          <Link to="/contacts/$contactListId/edit" params={{ contactListId: list.id }}>
-                            <Edit className="h-4 w-4 text-yellow-600" />
-                          </Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Contact List</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete the contact list "{list.name}"?
-                                This action cannot be undone and will remove all contacts in this list.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteContactList(list.id, list.name)}
-                                className="bg-red-600 text-white hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            columns={columns}
+            data={contactLists}
+            searchKey="name"
+            searchPlaceholder="Search contact lists..."
+          />
         ) : (
           <div className="bg-muted/50 rounded-xl p-8 text-center">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -208,8 +226,28 @@ function Contacts() {
             </Button>
           </div>
         )}
-
       </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingList} onOpenChange={() => setDeletingList(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Contact List</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deletingList?.name}"? This action cannot be undone and will remove all contacts in this list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteContactList}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

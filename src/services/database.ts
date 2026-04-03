@@ -1,11 +1,15 @@
 import { invoke } from '@tauri-apps/api/core';
 import type {
   Campaign,
+  CampaignStatus,
   Contact,
   ContactList,
   Template,
   Settings,
   CampaignAnalytics,
+  CampaignSendResult,
+  ImportResult,
+  ColumnMapping,
   CreateCampaignRequest,
   UpdateCampaignRequest,
   CreateContactListRequest,
@@ -128,6 +132,14 @@ export class DatabaseService {
     });
   }
 
+  static async getTemplateById(id: string): Promise<Template | null> {
+    return invoke('get_template_by_id', { id });
+  }
+
+  static async deleteTemplate(id: string): Promise<void> {
+    return invoke('delete_template', { id });
+  }
+
   // Settings operations
   static async getSettings(): Promise<Settings> {
     return invoke('get_settings');
@@ -147,5 +159,41 @@ export class DatabaseService {
   // Analytics operations
   static async getCampaignAnalytics(campaignId: string): Promise<CampaignAnalytics | null> {
     return invoke('get_campaign_analytics', { campaignId });
+  }
+
+  static async getAllAnalytics(): Promise<CampaignAnalytics[]> {
+    return invoke('get_all_analytics');
+  }
+
+  // Campaign enhancements
+  static async updateCampaignContactLists(id: string, listIds: string[]): Promise<Campaign> {
+    return invoke('update_campaign_contact_lists', { id, listIds });
+  }
+
+  static async updateCampaignStatus(id: string, status: CampaignStatus, scheduledAt?: string): Promise<Campaign> {
+    return invoke('update_campaign_status', { id, status: status.toLowerCase(), scheduledAt });
+  }
+
+  // SES operations
+  static async verifySesCreds(accessKey: string, secretKey: string, region: string): Promise<boolean> {
+    return invoke('verify_ses_credentials', { accessKey, secretKey, region });
+  }
+
+  static async sendCampaign(campaignId: string): Promise<CampaignSendResult> {
+    return invoke('send_campaign', { campaignId });
+  }
+
+  static async sendTestEmail(to: string, subject: string, htmlContent: string, fromEmail: string, fromName: string): Promise<string> {
+    return invoke('send_test_email', { to, subject, htmlContent, fromEmail, fromName });
+  }
+
+  // CSV Import
+  static async importContactsCsv(filePath: string, listId: string, columnMapping: ColumnMapping, hasHeader: boolean): Promise<ImportResult> {
+    return invoke('import_contacts_csv', {
+      filePath,
+      listId,
+      columnMapping: JSON.stringify(columnMapping),
+      hasHeader,
+    });
   }
 }

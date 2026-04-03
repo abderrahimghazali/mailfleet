@@ -1,4 +1,5 @@
 mod database;
+mod email;
 
 use database::{commands::*, storage::DatabaseStorage};
 use std::sync::Arc;
@@ -20,6 +21,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(storage_state)
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -39,11 +41,20 @@ pub fn run() {
             create_contact,
             delete_contact,
             get_templates,
+            get_template_by_id,
             create_template,
             update_template,
+            delete_template,
             get_settings,
             update_settings,
-            get_campaign_analytics
+            get_campaign_analytics,
+            get_all_analytics,
+            update_campaign_contact_lists,
+            update_campaign_status,
+            verify_ses_credentials,
+            send_test_email,
+            send_campaign,
+            import_contacts_csv
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
