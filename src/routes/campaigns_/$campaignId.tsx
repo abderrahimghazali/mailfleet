@@ -47,17 +47,18 @@ function CampaignDetail() {
 
         setCampaign(foundCampaign)
 
-        // Load contact lists
-        const lists = await DatabaseService.getContactLists()
+        // Load contact lists and analytics independently
+        const [lists, analyticsData] = await Promise.all([
+          DatabaseService.getContactLists().catch(() => []),
+          DatabaseService.getCampaignAnalytics(campaignId).catch(() => null),
+        ])
         setContactLists(lists)
-
-        // Load analytics
-        const analyticsData = await DatabaseService.getCampaignAnalytics(campaignId)
         setAnalytics(analyticsData)
 
       } catch (err) {
         console.error('Failed to load campaign data:', err)
-        setError('Failed to load campaign data')
+        const msg = err instanceof Error ? err.message : String(err)
+        setError(`Failed to load campaign: ${msg}`)
       } finally {
         setLoading(false)
       }

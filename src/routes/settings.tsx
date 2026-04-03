@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from 'sonner'
-import { Eye, EyeOff, Loader2, CheckCircle2, XCircle, Save, Sun, Moon } from 'lucide-react'
+import { Eye, EyeOff, Loader2, CheckCircle2, XCircle, Save } from 'lucide-react'
 
 export const Route = createFileRoute(route.settings)({
   component: Settings,
@@ -125,20 +125,6 @@ function Settings() {
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleThemeToggle = () => {
-    const newTheme = formData.theme === 'Light' ? 'Dark' : 'Light'
-    setFormData(prev => ({ ...prev, theme: newTheme }))
-
-    if (newTheme === 'Dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-
-    // Save immediately
-    DatabaseService.updateSettings({ theme: newTheme.toLowerCase() }).catch(console.error)
   }
 
   const breadcrumbs = [
@@ -302,37 +288,6 @@ function Settings() {
                 onChange={(e) => setFormData(prev => ({ ...prev, default_from_name: e.target.value }))}
                 placeholder="Your Company Name"
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Appearance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>Customize the look of your application.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Theme</Label>
-                <p className="text-sm text-muted-foreground">
-                  Switch between light and dark mode
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleThemeToggle}>
-                {formData.theme === 'Dark' ? (
-                  <>
-                    <Moon className="h-4 w-4 mr-2" />
-                    Dark
-                  </>
-                ) : (
-                  <>
-                    <Sun className="h-4 w-4 mr-2" />
-                    Light
-                  </>
-                )}
-              </Button>
             </div>
           </CardContent>
         </Card>

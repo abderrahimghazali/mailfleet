@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect } from 'react'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
 
@@ -9,35 +9,32 @@ interface RichTextEditorProps {
 }
 
 export function PlateEditor({ content, onChange, placeholder = "Start typing..." }: RichTextEditorProps) {
-  const quillRef = useRef<HTMLDivElement>(null)
-  const quillInstance = useRef<Quill | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const onChangeRef = useRef(onChange)
   const contentRef = useRef(content)
-  const placeholderRef = useRef(placeholder)
 
+  // Keep refs in sync
   onChangeRef.current = onChange
   contentRef.current = content
-  placeholderRef.current = placeholder
-
-  const handleTextChange = useCallback(() => {
-    if (quillInstance.current) {
-      onChangeRef.current(quillInstance.current.root.innerHTML)
-    }
-  }, [])
 
   useEffect(() => {
-    if (!quillRef.current) return
-    if (quillRef.current.dataset.quillInitialized === 'true') return
-    quillRef.current.dataset.quillInitialized = 'true'
+    const container = containerRef.current
+    if (!container) return
 
-    const quill = new Quill(quillRef.current, {
+    // Clear container and create a fresh editor div
+    const editorDiv = document.createElement('div')
+    editorDiv.style.minHeight = '400px'
+    container.innerHTML = ''
+    container.appendChild(editorDiv)
+
+    const quill = new Quill(editorDiv, {
       theme: 'snow',
-      placeholder: placeholderRef.current,
+      placeholder,
       modules: {
         toolbar: [
           [{ 'header': [1, 2, 3, false] }],
           ['bold', 'italic', 'underline'],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'list': 'ordered' }, { 'list': 'bullet' }],
           ['blockquote'],
           [{ 'align': [] }],
           ['link', 'image'],
@@ -47,29 +44,22 @@ export function PlateEditor({ content, onChange, placeholder = "Start typing..."
       }
     })
 
-    quillInstance.current = quill
-
     if (contentRef.current) {
       quill.root.innerHTML = contentRef.current
     }
 
-    quill.on('text-change', handleTextChange)
+    quill.on('text-change', () => {
+      onChangeRef.current(quill.root.innerHTML)
+    })
 
     return () => {
-      quillInstance.current?.off('text-change')
-      quillInstance.current = null
+      quill.off('text-change')
+      container.innerHTML = ''
     }
-  }, [handleTextChange])
-
-  useEffect(() => {
-    if (quillInstance.current && content !== quillInstance.current.root.innerHTML) {
-      quillInstance.current.root.innerHTML = content || ''
-    }
-  }, [content])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
-    <div className="border rounded-md">
-      <div ref={quillRef} style={{ minHeight: '400px' }} />
-    </div>
+    <div className="border rounded-md" ref={containerRef} />
   )
 }

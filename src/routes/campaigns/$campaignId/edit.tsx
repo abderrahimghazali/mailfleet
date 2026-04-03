@@ -75,12 +75,8 @@ function EditCampaign() {
     async function loadData() {
       try {
         setLoading(true)
-        const [campaignData, listsData, templatesData] = await Promise.all([
-          DatabaseService.getCampaignById(campaignId),
-          DatabaseService.getContactLists(),
-          DatabaseService.getTemplates(),
-        ])
 
+        const campaignData = await DatabaseService.getCampaignById(campaignId)
         if (campaignData) {
           setCampaign(campaignData)
           setFormData({
@@ -93,13 +89,21 @@ function EditCampaign() {
           setSelectedListIds(campaignData.contact_list_ids || [])
         } else {
           setError('Campaign not found')
+          return
         }
+
+        // Load lists and templates independently — don't block on failure
+        const [listsData, templatesData] = await Promise.all([
+          DatabaseService.getContactLists().catch(() => []),
+          DatabaseService.getTemplates().catch(() => []),
+        ])
 
         setAllContactLists(listsData)
         setAllTemplates(templatesData)
       } catch (err) {
-        console.error('Failed to load data:', err)
-        setError('Failed to load campaign')
+        console.error('Failed to load campaign:', err)
+        const msg = err instanceof Error ? err.message : String(err)
+        setError(`Failed to load campaign: ${msg}`)
       } finally {
         setLoading(false)
       }

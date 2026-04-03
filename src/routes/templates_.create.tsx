@@ -12,7 +12,7 @@ import { PlateEditor } from '@/components/plate-editor'
 import { toast } from 'sonner'
 import { Loader2, Save, X } from 'lucide-react'
 
-export const Route = createFileRoute('/templates/create')({
+export const Route = createFileRoute('/templates_/create')({
   component: CreateTemplate,
 })
 
