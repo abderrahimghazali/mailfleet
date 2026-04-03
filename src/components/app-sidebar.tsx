@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import {
   BarChart3,
@@ -12,13 +12,13 @@ import {
   Users,
 } from "lucide-react"
 
-import { NavMain } from "@/components/nav-main"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -38,36 +38,13 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { useState } from "react"
 
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: route.dashboard,
-      icon: Home,
-      isActive: true,
-    },
-    {
-      title: "Campaigns",
-      url: route.campaigns,
-      icon: Mail,
-    },
-    {
-      title: "Contacts",
-      url: route.contacts,
-      icon: Users,
-    },
-    {
-      title: "Templates",
-      url: route.templates,
-      icon: FileText,
-    },
-    {
-      title: "Analytics",
-      url: route.analytics,
-      icon: BarChart3,
-    },
-  ],
-}
+const navItems = [
+  { title: "Dashboard", url: route.dashboard, icon: Home },
+  { title: "Campaigns", url: route.campaigns, icon: Mail },
+  { title: "Contacts", url: route.contacts, icon: Users },
+  { title: "Templates", url: route.templates, icon: FileText },
+  { title: "Analytics", url: route.analytics, icon: BarChart3 },
+]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [showSupport, setShowSupport] = useState(false)
@@ -75,6 +52,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [feedbackText, setFeedbackText] = useState('')
   const [supportEmail, setSupportEmail] = useState('')
   const [supportMessage, setSupportMessage] = useState('')
+
+  const routerState = useRouterState()
+  const currentPath = routerState.location.pathname
+
+  const isActive = (url: string) => {
+    if (url === '/') return currentPath === '/'
+    return currentPath.startsWith(url)
+  }
 
   const handleSubmitFeedback = () => {
     if (!feedbackText.trim()) return
@@ -85,7 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const handleSubmitSupport = () => {
     if (!supportMessage.trim()) return
-    toast.success('Support request submitted. We\'ll get back to you soon!')
+    toast.success('Support request submitted!')
     setSupportEmail('')
     setSupportMessage('')
     setShowSupport(false)
@@ -99,11 +84,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem className="pt-2">
               <SidebarMenuButton size="lg" asChild>
                 <Link to={route.home}>
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                    <img src="/icon-32.png" alt="Mailfleet" className="size-8 rounded-lg" />
+                  <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-primary shadow-sm">
+                    <img src="/icon-32.png" alt="Mailfleet" className="size-5 brightness-0 invert" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Mailfleet</span>
+                    <span className="truncate font-display font-bold text-base tracking-tight">MailFleet</span>
+                    <span className="truncate text-xs text-muted-foreground">Email campaigns</span>
                   </div>
                 </Link>
               </SidebarMenuButton>
@@ -111,19 +97,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <NavMain items={data.navMain} />
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">Navigation</SidebarGroupLabel>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    data-active={isActive(item.url)}
+                    className="transition-all duration-150"
+                  >
+                    <Link to={item.url}>
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
           <SidebarGroup className="mt-auto">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton size="sm" onClick={() => setShowSupport(true)}>
-                    <LifeBuoy />
+                  <SidebarMenuButton size="sm" onClick={() => setShowSupport(true)} className="text-muted-foreground">
+                    <LifeBuoy className="size-4" />
                     <span>Support</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton size="sm" onClick={() => setShowFeedback(true)}>
-                    <MessageSquare />
+                  <SidebarMenuButton size="sm" onClick={() => setShowFeedback(true)} className="text-muted-foreground">
+                    <MessageSquare className="size-4" />
                     <span>Feedback</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -134,9 +140,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton
+                asChild
+                data-active={isActive(route.settings)}
+                className="transition-all duration-150"
+              >
                 <Link to={route.settings}>
-                  <Settings />
+                  <Settings className="size-4" />
                   <span>Settings</span>
                 </Link>
               </SidebarMenuButton>
@@ -149,8 +159,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Dialog open={showSupport} onOpenChange={setShowSupport}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <LifeBuoy className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 font-display">
+              <LifeBuoy className="h-5 w-5 text-primary" />
               Contact Support
             </DialogTitle>
             <DialogDescription>
@@ -160,29 +170,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="support_email">Your Email</Label>
-              <Input
-                id="support_email"
-                type="email"
-                value={supportEmail}
-                onChange={(e) => setSupportEmail(e.target.value)}
-                placeholder="you@example.com"
-              />
+              <Input id="support_email" type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} placeholder="you@example.com" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="support_message">How can we help?</Label>
-              <Textarea
-                id="support_message"
-                value={supportMessage}
-                onChange={(e) => setSupportMessage(e.target.value)}
-                placeholder="Describe your issue..."
-                rows={5}
-              />
+              <Textarea id="support_message" value={supportMessage} onChange={(e) => setSupportMessage(e.target.value)} placeholder="Describe your issue..." rows={5} />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowSupport(false)}>Cancel</Button>
-              <Button onClick={handleSubmitSupport} disabled={!supportMessage.trim()}>
-                Submit Request
-              </Button>
+              <Button onClick={handleSubmitSupport} disabled={!supportMessage.trim()}>Submit Request</Button>
             </div>
           </div>
         </DialogContent>
@@ -192,30 +188,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 font-display">
+              <MessageSquare className="h-5 w-5 text-primary" />
               Send Feedback
             </DialogTitle>
             <DialogDescription>
-              Your feedback helps us improve Mailfleet. Share your thoughts, ideas, or suggestions.
+              Help us improve MailFleet. Share your thoughts.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="feedback_text">Your Feedback</Label>
-              <Textarea
-                id="feedback_text"
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder="Tell us what you think..."
-                rows={5}
-              />
+              <Textarea id="feedback_text" value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Tell us what you think..." rows={5} />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowFeedback(false)}>Cancel</Button>
-              <Button onClick={handleSubmitFeedback} disabled={!feedbackText.trim()}>
-                Send Feedback
-              </Button>
+              <Button onClick={handleSubmitFeedback} disabled={!feedbackText.trim()}>Send Feedback</Button>
             </div>
           </div>
         </DialogContent>

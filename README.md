@@ -21,16 +21,20 @@
 
 ---
 
+<p align="center">
+  <img src="screenshot.png" alt="MailFleet Dashboard" width="800" />
+</p>
+
+---
+
 ## Features
 
-- **Campaign Management** — Create, edit, schedule, and send email campaigns with a rich WYSIWYG editor
-- **Contact Lists** — Organize contacts into lists, bulk import via CSV, and manage subscribers
-- **Email Templates** — Design reusable templates with the built-in HTML editor, preview, and apply to campaigns
-- **AWS SES Integration** — Configure your AWS SES credentials, verify connectivity, and send emails at scale with rate limiting
-- **Campaign Analytics** — Track delivery rates, opens, clicks, bounces, and unsubscribes per campaign
-- **Dark Mode** — Full light/dark theme support with system preference detection
-- **Data Tables** — Sortable, searchable, and paginated tables powered by TanStack Table
-- **Cross-Platform** — Runs on macOS, Windows, and Linux as a native desktop app
+- **Campaigns** — Create, edit, and send email campaigns with a WYSIWYG editor
+- **Contacts** — Manage contact lists, bulk import from CSV
+- **Templates** — Build reusable email templates, preview, and apply to campaigns
+- **AWS SES** — Connect your AWS credentials, verify, and send at scale
+- **Analytics** — Track delivery, opens, clicks, bounces with charts and breakdowns
+- **Cross-Platform** — Native desktop app for macOS, Windows, and Linux
 
 ## Tech Stack
 

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { DatabaseService } from "@/services/database"
 
 import { Link } from "@tanstack/react-router"
-import { Home, Sun, Moon } from "lucide-react"
+import { Sun, Moon } from "lucide-react"
 
 interface BreadcrumbData {
   label: string
@@ -30,21 +30,16 @@ export function PageHeader({ breadcrumbs }: PageHeaderProps) {
   const toggleTheme = () => {
     const newDark = !isDark
     setIsDark(newDark)
-    if (newDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+    document.documentElement.classList.toggle('dark', newDark)
     DatabaseService.updateSettings({ theme: newDark ? 'dark' : 'light' }).catch(console.error)
   }
 
-  // Sync if theme changes externally
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'))
   }, [])
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-2 px-4">
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 px-6">
       <Breadcrumb>
         <BreadcrumbList>
           {breadcrumbs.map((item, index) => (
@@ -52,27 +47,30 @@ export function PageHeader({ breadcrumbs }: PageHeaderProps) {
               <BreadcrumbItem className={index === 0 ? "hidden md:block" : ""}>
                 {item.href ? (
                   <BreadcrumbLink asChild>
-                    <Link to={item.href} className="flex items-center gap-1">
-                      {index === 0 && <Home className="h-4 w-4" />}
+                    <Link to={item.href} className="text-muted-foreground/70 hover:text-foreground transition-colors">
                       {item.label}
                     </Link>
                   </BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage className="flex items-center gap-1">
-                    {index === 0 && <Home className="h-4 w-4" />}
+                  <BreadcrumbPage className="font-medium text-foreground">
                     {item.label}
                   </BreadcrumbPage>
                 )}
               </BreadcrumbItem>
               {index < breadcrumbs.length - 1 && (
-                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbSeparator className="hidden md:block text-muted-foreground/40" />
               )}
             </React.Fragment>
           ))}
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={toggleTheme}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground"
+        onClick={toggleTheme}
+      >
         {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
     </header>
