@@ -82,22 +82,6 @@ The built app will be in `src-tauri/target/release/bundle/`.
 4. **Launch Campaigns** — Create a campaign, assign contact lists, compose content (or load a template), and send.
 5. **Track Results** — View delivery, open, click, and bounce analytics on the Analytics page.
 
-## Project Structure
-
-```
-mailfleet/
-├── src/                    # React frontend
-│   ├── components/         # UI components (shadcn/ui)
-│   ├── routes/             # TanStack Router file-based routes
-│   ├── services/           # Tauri IPC service layer
-│   └── types/              # TypeScript type definitions
-├── src-tauri/              # Rust backend
-│   └── src/
-│       ├── database/       # JSON storage, models, commands
-│       └── email/          # AWS SES client & campaign sender
-└── .github/workflows/      # CI (ESLint, TypeScript, Clippy, Rustfmt)
-```
-
 ## License
 
-MIT
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
