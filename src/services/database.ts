@@ -187,6 +187,24 @@ export class DatabaseService {
     return invoke('send_test_email', { to, subject, htmlContent, fromEmail, fromName });
   }
 
+  // Validation
+  static async validateEmails(emails: string[]): Promise<import('../types/database').ValidationSummary> {
+    return invoke('validate_emails', { emails });
+  }
+
+  static async validateContactList(listId: string): Promise<import('../types/database').ValidationSummary> {
+    return invoke('validate_contact_list', { listId });
+  }
+
+  // Tracking
+  static async setupTracking(): Promise<{ configuration_set_name: string; sns_topic_arn: string; sqs_queue_url: string }> {
+    return invoke('setup_tracking');
+  }
+
+  static async pollTrackingEvents(): Promise<number> {
+    return invoke('poll_tracking_events');
+  }
+
   // CSV Import
   static async importContactsCsv(filePath: string, listId: string, columnMapping: ColumnMapping, hasHeader: boolean): Promise<ImportResult> {
     return invoke('import_contacts_csv', {

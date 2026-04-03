@@ -4,10 +4,12 @@ import { route } from '@/constants/routes'
 import { useEffect, useState } from 'react'
 import { DatabaseService } from '@/services/database'
 import type { Campaign, CampaignAnalytics } from '@/types/database'
-import { BarChart3, TrendingUp, Mail, MousePointer, AlertTriangle } from 'lucide-react'
+import { BarChart3, TrendingUp, Mail, MousePointer, AlertTriangle, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { Bar, BarChart, XAxis, YAxis, Area, AreaChart, CartesianGrid, Pie, PieChart, Cell } from 'recharts'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute(route.analytics)({
   component: Analytics,
@@ -17,6 +19,7 @@ function Analytics() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [allAnalytics, setAllAnalytics] = useState<CampaignAnalytics[]>([])
   const [loading, setLoading] = useState(true)
+  const [polling, setPolling] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -120,9 +123,36 @@ function Analytics() {
     <>
       <PageHeader breadcrumbs={breadcrumbs} />
       <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
-        <div>
-          <h1>Analytics</h1>
-          <p className="text-muted-foreground mt-1">Track the performance of your email campaigns</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1>Analytics</h1>
+            <p className="text-muted-foreground mt-1">Track the performance of your email campaigns</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={polling}
+            onClick={async () => {
+              setPolling(true)
+              try {
+                const count = await DatabaseService.pollTrackingEvents()
+                if (count > 0) {
+                  const analyticsData = await DatabaseService.getAllAnalytics()
+                  setAllAnalytics(analyticsData)
+                  toast.success(`Updated ${count} event(s)`)
+                } else {
+                  toast.info('No new events')
+                }
+              } catch {
+                toast.error('Failed to poll events')
+              } finally {
+                setPolling(false)
+              }
+            }}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${polling ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {loading ? (

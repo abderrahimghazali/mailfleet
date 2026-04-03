@@ -195,7 +195,12 @@ function EditCampaign() {
       }
 
       const result = await DatabaseService.sendCampaign(campaignId)
-      toast.success(`Campaign sent! ${result.sent} emails delivered.${result.errors.length > 0 ? ` ${result.errors.length} errors.` : ''}`)
+      if (result.errors.length > 0) {
+        toast.error(`${result.sent} sent, ${result.errors.length} failed: ${result.errors[0]}`)
+        console.error('Send errors:', result.errors)
+      } else {
+        toast.success(`Campaign sent! ${result.sent} emails delivered.`)
+      }
       navigate({ to: '/campaigns/$campaignId', params: { campaignId } })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)

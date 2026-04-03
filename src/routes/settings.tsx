@@ -29,6 +29,7 @@ const AWS_REGIONS = [
   { value: 'us-west-2', label: 'US West (Oregon)' },
   { value: 'eu-west-1', label: 'EU (Ireland)' },
   { value: 'eu-west-2', label: 'EU (London)' },
+  { value: 'eu-west-3', label: 'EU (Paris)' },
   { value: 'eu-central-1', label: 'EU (Frankfurt)' },
   { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
   { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney)' },
@@ -45,6 +46,8 @@ function Settings() {
   const [testError, setTestError] = useState('')
   const [showAccessKey, setShowAccessKey] = useState(false)
   const [showSecretKey, setShowSecretKey] = useState(false)
+  const [settingUpTracking, setSettingUpTracking] = useState(false)
+  const [trackingEnabled, setTrackingEnabled] = useState(false)
 
   const [formData, setFormData] = useState({
     ses_access_key: '',
@@ -69,6 +72,9 @@ function Settings() {
         })
         if (settings.ses_settings.verified) {
           setTestResult('success')
+        }
+        if (settings.ses_settings.tracking_config_set) {
+          setTrackingEnabled(true)
         }
       } catch (error) {
         console.error('Failed to load settings:', error)
@@ -147,12 +153,34 @@ function Settings() {
     <>
       <PageHeader breadcrumbs={breadcrumbs} />
       <div className="flex flex-1 flex-col gap-6 p-4 pt-0 max-w-3xl">
+        {/* Setup Guide */}
+        <Card className="border-primary/20 bg-primary/[0.03]">
+          <CardContent className="p-5">
+            <details>
+              <summary className="text-sm font-medium cursor-pointer select-none">
+                How to get your AWS SES credentials
+              </summary>
+              <ol className="mt-3 space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                <li>Go to the <a href="https://console.aws.amazon.com/ses" target="_blank" className="text-primary underline">AWS SES Console</a> and pick a region (e.g. eu-west-3 for Paris)</li>
+                <li>Under <strong>Identities</strong>, click <strong>Create Identity</strong> and verify your email address (click the link AWS sends you)</li>
+                <li>Go to <a href="https://console.aws.amazon.com/iam/home#/users/create" target="_blank" className="text-primary underline">IAM &gt; Create User</a>, name it <code className="bg-muted px-1 rounded">mailfleet-ses</code></li>
+                <li>Attach the policy <code className="bg-muted px-1 rounded">AmazonSESFullAccess</code></li>
+                <li>Go to the user &gt; <strong>Security credentials</strong> &gt; <strong>Create access key</strong> &gt; select "Application running outside AWS"</li>
+                <li>Copy the <strong>Access Key ID</strong> and <strong>Secret Access Key</strong> below</li>
+              </ol>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Note: In SES sandbox mode, you can only send to verified email addresses. Request production access to send to anyone.
+              </p>
+            </details>
+          </CardContent>
+        </Card>
+
         {/* AWS SES Configuration */}
         <Card>
           <CardHeader>
             <CardTitle>AWS SES Configuration</CardTitle>
             <CardDescription>
-              Configure your Amazon SES credentials to send emails. You can find these in your AWS IAM console.
+              Enter your IAM user credentials and select the region where your SES identities are verified.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -288,6 +316,60 @@ function Settings() {
                 onChange={(e) => setFormData(prev => ({ ...prev, default_from_name: e.target.value }))}
                 placeholder="Your Company Name"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Email Tracking */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Email Tracking</CardTitle>
+            <CardDescription>
+              Enable open, click, and bounce tracking via AWS SES event publishing.
+              This creates an SES Configuration Set, SNS topic, and SQS queue in your AWS account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">
+                  {trackingEnabled ? 'Tracking is active' : 'Tracking not configured'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {trackingEnabled
+                    ? 'Opens, clicks, and bounces are being tracked for new campaigns.'
+                    : 'Set up tracking to get real open and click analytics.'}
+                </p>
+              </div>
+              <Button
+                variant={trackingEnabled ? 'outline' : 'default'}
+                size="sm"
+                onClick={async () => {
+                  setSettingUpTracking(true)
+                  try {
+                    await DatabaseService.setupTracking()
+                    setTrackingEnabled(true)
+                    toast.success('Tracking configured successfully!')
+                  } catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err)
+                    toast.error(msg)
+                  } finally {
+                    setSettingUpTracking(false)
+                  }
+                }}
+                disabled={settingUpTracking || !formData.ses_access_key}
+              >
+                {settingUpTracking ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Setting up...
+                  </>
+                ) : trackingEnabled ? (
+                  'Reconfigure'
+                ) : (
+                  'Enable Tracking'
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>

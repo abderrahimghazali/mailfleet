@@ -54,7 +54,11 @@ pub fn run() {
             verify_ses_credentials,
             send_test_email,
             send_campaign,
-            import_contacts_csv
+            import_contacts_csv,
+            setup_tracking,
+            poll_tracking_events,
+            validate_emails,
+            validate_contact_list
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

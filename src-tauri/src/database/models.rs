@@ -81,6 +81,10 @@ pub struct SesSettings {
     pub secret_access_key: Option<String>,
     pub region: String,
     pub verified: bool,
+    #[serde(default)]
+    pub tracking_config_set: Option<String>,
+    #[serde(default)]
+    pub tracking_queue_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -156,6 +160,26 @@ pub struct ImportResult {
     pub errors: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EmailValidationResult {
+    pub email: String,
+    pub valid_format: bool,
+    pub has_mx: bool,
+    pub is_disposable: bool,
+    pub is_role_based: bool,
+    pub status: String,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidationSummary {
+    pub total: u32,
+    pub valid: u32,
+    pub invalid: u32,
+    pub risky: u32,
+    pub results: Vec<EmailValidationResult>,
+}
+
 // Database container structs
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CampaignsData {
@@ -192,6 +216,8 @@ impl Default for Settings {
                 secret_access_key: None,
                 region: "us-east-1".to_string(),
                 verified: false,
+                tracking_config_set: None,
+                tracking_queue_url: None,
             },
             app_settings: AppSettings {
                 theme: Theme::Light,

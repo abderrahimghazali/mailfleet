@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::database::{models::*, storage::DatabaseStorage};
 use crate::email::{self, sender::CampaignSendResult};
+use trust_dns_resolver::TokioAsyncResolver;
 
 type DatabaseState = Arc<Mutex<DatabaseStorage>>;
 
@@ -639,7 +640,7 @@ pub async fn send_test_email(
     let from_address = format!("{} <{}>", from_name, from_email);
 
     let message_id =
-        email::ses::send_email(&client, &from_address, &to, &subject, &html_content, None)
+        email::ses::send_email(&client, &from_address, &to, &subject, &html_content, None, None, None)
             .await
             .map_err(|e| format!("Failed to send test email: {}", e))?;
 
@@ -784,4 +785,219 @@ pub async fn import_contacts_csv(
         skipped,
         errors,
     })
+}
+
+// Tracking commands
+#[tauri::command]
+pub async fn setup_tracking(
+    storage: State<'_, DatabaseState>,
+) -> Result<email::tracking::TrackingConfig, String> {
+    let storage = storage.lock().await;
+    let settings = storage.get_settings().await.map_err(|e| e.to_string())?;
+
+    let access_key = settings
+        .ses_settings
+        .access_key_id
+        .as_ref()
+        .ok_or("AWS SES Access Key not configured")?;
+    let secret_key = settings
+        .ses_settings
+        .secret_access_key
+        .as_ref()
+        .ok_or("AWS SES Secret Key not configured")?;
+
+    let config = email::tracking::setup_tracking(access_key, secret_key, &settings.ses_settings.region)
+        .await
+        .map_err(|e| format!("Tracking setup failed: {}", e))?;
+
+    // Save tracking config to settings
+    let mut updated_settings = settings.clone();
+    updated_settings.ses_settings.tracking_config_set = Some(config.configuration_set_name.clone());
+    updated_settings.ses_settings.tracking_queue_url = Some(config.sqs_queue_url.clone());
+    storage
+        .save_settings(&updated_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(config)
+}
+
+#[tauri::command]
+pub async fn poll_tracking_events(
+    storage: State<'_, DatabaseState>,
+) -> Result<u32, String> {
+    let storage = storage.lock().await;
+    let settings = storage.get_settings().await.map_err(|e| e.to_string())?;
+
+    let access_key = settings
+        .ses_settings
+        .access_key_id
+        .as_ref()
+        .ok_or("AWS SES Access Key not configured")?;
+    let secret_key = settings
+        .ses_settings
+        .secret_access_key
+        .as_ref()
+        .ok_or("AWS SES Secret Key not configured")?;
+    let queue_url = settings
+        .ses_settings
+        .tracking_queue_url
+        .as_ref()
+        .ok_or("Tracking not configured. Run Setup Tracking first.")?;
+
+    email::tracking::poll_events(&storage, access_key, secret_key, &settings.ses_settings.region, queue_url)
+        .await
+        .map_err(|e| format!("Poll failed: {}", e))
+}
+
+// Email validation
+const DISPOSABLE_DOMAINS: &[&str] = &[
+    "mailinator.com", "guerrillamail.com", "tempmail.com", "throwaway.email",
+    "yopmail.com", "sharklasers.com", "guerrillamailblock.com", "grr.la",
+    "dispostable.com", "trashmail.com", "fakeinbox.com", "mailnesia.com",
+    "maildrop.cc", "discard.email", "temp-mail.org", "10minutemail.com",
+    "tempail.com", "burnermail.io", "getnada.com", "mohmal.com",
+    "emailondeck.com", "crazymailing.com", "tmail.ws",
+];
+
+const ROLE_PREFIXES: &[&str] = &[
+    "admin", "info", "support", "sales", "contact", "noreply", "no-reply",
+    "webmaster", "postmaster", "abuse", "help", "office", "mail",
+    "billing", "marketing", "team", "hello", "enquiries",
+];
+
+#[tauri::command]
+pub async fn validate_emails(emails: Vec<String>) -> Result<ValidationSummary, String> {
+    let resolver = TokioAsyncResolver::tokio_from_system_conf()
+        .map_err(|e| format!("DNS resolver error: {}", e))?;
+
+    let mut results = Vec::new();
+    let mut valid = 0u32;
+    let mut invalid = 0u32;
+    let mut risky = 0u32;
+
+    for email in &emails {
+        let email = email.trim().to_lowercase();
+        if email.is_empty() {
+            continue;
+        }
+
+        // Format check
+        let parts: Vec<&str> = email.split('@').collect();
+        if parts.len() != 2 || parts[0].is_empty() || parts[1].is_empty() || !parts[1].contains('.') {
+            invalid += 1;
+            results.push(EmailValidationResult {
+                email: email.clone(),
+                valid_format: false,
+                has_mx: false,
+                is_disposable: false,
+                is_role_based: false,
+                status: "invalid".to_string(),
+                reason: "Invalid email format".to_string(),
+            });
+            continue;
+        }
+
+        let local = parts[0];
+        let domain = parts[1];
+
+        let is_disposable = DISPOSABLE_DOMAINS.contains(&domain);
+        let is_role_based = ROLE_PREFIXES.iter().any(|p| local == *p);
+
+        // MX record check
+        let has_mx = match resolver.mx_lookup(domain).await {
+            Ok(mx) => !mx.iter().next().is_none(),
+            Err(_) => {
+                // Fallback: check A record
+                resolver.lookup_ip(domain).await.is_ok()
+            }
+        };
+
+        if !has_mx {
+            invalid += 1;
+            results.push(EmailValidationResult {
+                email,
+                valid_format: true,
+                has_mx: false,
+                is_disposable,
+                is_role_based,
+                status: "invalid".to_string(),
+                reason: "Domain has no mail server (no MX record)".to_string(),
+            });
+            continue;
+        }
+
+        if is_disposable {
+            risky += 1;
+            results.push(EmailValidationResult {
+                email,
+                valid_format: true,
+                has_mx: true,
+                is_disposable: true,
+                is_role_based,
+                status: "risky".to_string(),
+                reason: "Disposable/temporary email provider".to_string(),
+            });
+            continue;
+        }
+
+        if is_role_based {
+            risky += 1;
+            results.push(EmailValidationResult {
+                email,
+                valid_format: true,
+                has_mx: true,
+                is_disposable: false,
+                is_role_based: true,
+                status: "risky".to_string(),
+                reason: "Role-based email address".to_string(),
+            });
+            continue;
+        }
+
+        valid += 1;
+        results.push(EmailValidationResult {
+            email,
+            valid_format: true,
+            has_mx: true,
+            is_disposable: false,
+            is_role_based: false,
+            status: "valid".to_string(),
+            reason: "Valid email address".to_string(),
+        });
+    }
+
+    Ok(ValidationSummary {
+        total: results.len() as u32,
+        valid,
+        invalid,
+        risky,
+        results,
+    })
+}
+
+#[tauri::command]
+pub async fn validate_contact_list(
+    storage: State<'_, DatabaseState>,
+    list_id: String,
+) -> Result<ValidationSummary, String> {
+    let storage = storage.lock().await;
+    let list_uuid = Uuid::parse_str(&list_id).map_err(|e| e.to_string())?;
+    let data = storage.get_contacts().await.map_err(|e| e.to_string())?;
+
+    let emails: Vec<String> = data
+        .contacts
+        .iter()
+        .filter(|c| c.list_ids.contains(&list_uuid))
+        .map(|c| c.email.clone())
+        .collect();
+
+    if emails.is_empty() {
+        return Err("No contacts in this list".to_string());
+    }
+
+    // Drop the lock before the async DNS calls
+    drop(storage);
+
+    validate_emails(emails).await
 }

@@ -61,6 +61,8 @@ export interface SesSettings {
   secret_access_key?: string;
   region: string;
   verified: boolean;
+  tracking_config_set?: string;
+  tracking_queue_url?: string;
 }
 
 export interface AppSettings {
@@ -116,6 +118,24 @@ export interface ColumnMapping {
   email: number;
   first_name?: number;
   last_name?: number;
+}
+
+export interface EmailValidationResult {
+  email: string;
+  valid_format: boolean;
+  has_mx: boolean;
+  is_disposable: boolean;
+  is_role_based: boolean;
+  status: 'valid' | 'invalid' | 'risky';
+  reason: string;
+}
+
+export interface ValidationSummary {
+  total: number;
+  valid: number;
+  invalid: number;
+  risky: number;
+  results: EmailValidationResult[];
 }
 
 // API Request/Response types

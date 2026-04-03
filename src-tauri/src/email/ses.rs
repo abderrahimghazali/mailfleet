@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use aws_config::Region;
 use aws_credential_types::Credentials;
-use aws_sdk_sesv2::types::{Body, Content, Destination, EmailContent, Message};
+use aws_sdk_sesv2::types::{Body, Content, Destination, EmailContent, Message, MessageTag};
 use aws_sdk_sesv2::Client;
 
 pub async fn build_ses_client(access_key: &str, secret_key: &str, region: &str) -> Result<Client> {
@@ -32,6 +32,8 @@ pub async fn send_email(
     subject: &str,
     html_body: &str,
     text_body: Option<&str>,
+    config_set: Option<&str>,
+    campaign_id: Option<&str>,
 ) -> Result<String> {
     let subject_content = Content::builder()
         .data(subject)
@@ -67,14 +69,35 @@ pub async fn send_email(
 
     let destination = Destination::builder().to_addresses(to_address).build();
 
-    let result = client
+    let mut request = client
         .send_email()
         .from_email_address(from_address)
         .destination(destination)
-        .content(email_content)
+        .content(email_content);
+
+    // Attach configuration set for tracking
+    if let Some(cs) = config_set {
+        request = request.configuration_set_name(cs);
+    }
+
+    // Tag with campaign ID so we can match events back
+    if let Some(cid) = campaign_id {
+        request = request.email_tags(
+            MessageTag::builder()
+                .name("mailfleet-campaign-id")
+                .value(cid)
+                .build()
+                .unwrap(),
+        );
+    }
+
+    let result = request
         .send()
         .await
-        .context("Failed to send email via SES")?;
+        .map_err(|e| {
+            let msg = format!("{:?}", e);
+            anyhow::anyhow!("SES error: {}", msg)
+        })?;
 
     Ok(result.message_id().unwrap_or("unknown").to_string())
 }

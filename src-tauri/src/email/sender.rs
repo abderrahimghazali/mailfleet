@@ -66,6 +66,9 @@ pub async fn send_campaign_emails(
     let client =
         ses::build_ses_client(access_key, secret_key, &settings.ses_settings.region).await?;
 
+    let config_set = settings.ses_settings.tracking_config_set.as_deref();
+    let campaign_id_str = campaign_id.to_string();
+
     // Load contacts and suppression list
     let contacts_data = storage.get_contacts().await?;
     let suppression_data = storage.get_suppression().await?;
@@ -130,6 +133,7 @@ pub async fn send_campaign_emails(
     let batch_size = 14; // SES default sending rate
 
     for (i, contact) in contacts_to_send.iter().enumerate() {
+        eprintln!("[mailfleet] Sending to {} from {}", contact.email, from_address);
         match ses::send_email(
             &client,
             &from_address,
@@ -137,10 +141,13 @@ pub async fn send_campaign_emails(
             &campaign.subject,
             content,
             None,
+            config_set,
+            Some(&campaign_id_str),
         )
         .await
         {
-            Ok(_message_id) => {
+            Ok(message_id) => {
+                eprintln!("[mailfleet] OK: {} -> {}", contact.email, message_id);
                 result.sent += 1;
                 analytics_events.push(AnalyticsEvent {
                     event_type: EventType::Sent,
@@ -151,6 +158,7 @@ pub async fn send_campaign_emails(
             }
             Err(e) => {
                 let err_msg = format!("{}: {}", contact.email, e);
+                eprintln!("[mailfleet] FAIL: {}", err_msg);
                 result.errors.push(err_msg);
             }
         }
