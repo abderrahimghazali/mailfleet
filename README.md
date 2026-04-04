@@ -21,6 +21,10 @@
   Manage contacts, create email templates, and send campaigns with AWS SES integration.
 </p>
 
+<p align="center">
+  <a href="https://github.com/abderrahimghazali/mailfleet/releases/latest"><img src="https://img.shields.io/badge/Download-macOS_(Apple_Silicon)-000?style=for-the-badge&logo=apple&logoColor=white" alt="Download"></a>
+</p>
+
 ---
 
 <p align="center">
@@ -39,7 +43,8 @@
 - **Merge Tags** — Personalize emails with {{first_name}}, {{last_name}}, {{email}}
 - **Auto-Unsubscribe** — CAN-SPAM/GDPR compliant unsubscribe links auto-injected
 - **Auto-Suppression** — Bounced and complained contacts automatically flagged and skipped
-- **Cross-Platform** — Native desktop app for macOS, Windows, and Linux
+- **AI Agent** — Built-in email marketing assistant (Anthropic, OpenAI, Claude Code, or custom provider)
+- **macOS Desktop App** — Native app built with Tauri 2
 
 ## Tech Stack
 
