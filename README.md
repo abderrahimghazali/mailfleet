@@ -18,10 +18,7 @@
 <p align="center">
   <a href="https://github.com/abderrahimghazali/mailfleet/actions/workflows/lint.yml"><img src="https://github.com/abderrahimghazali/mailfleet/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
   <a href="https://github.com/abderrahimghazali/mailfleet/releases/latest"><img src="https://img.shields.io/github/v/release/abderrahimghazali/mailfleet?label=Latest%20Release&color=brightgreen" alt="Latest Release"></a>
-  <a href="https://github.com/abderrahimghazali/mailfleet/stargazers"><img src="https://img.shields.io/github/stars/abderrahimghazali/mailfleet?style=flat&color=yellow" alt="Stars"></a>
   <a href="https://github.com/abderrahimghazali/mailfleet/issues"><img src="https://img.shields.io/github/issues/abderrahimghazali/mailfleet?color=orange" alt="Issues"></a>
-  <img src="https://img.shields.io/badge/Platform-macOS-000?logo=apple&logoColor=white" alt="macOS">
-  <img src="https://img.shields.io/badge/AI%20Powered-%F0%9F%A4%96-blueviolet" alt="AI Powered">
 </p>
 
 <p align="center">
