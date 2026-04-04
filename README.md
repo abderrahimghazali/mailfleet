@@ -1,5 +1,3 @@
-# MailFleet
-
 <p align="center">
   <img src="src-tauri/icons/icon.png" alt="MailFleet" width="128" height="128">
   <br>
