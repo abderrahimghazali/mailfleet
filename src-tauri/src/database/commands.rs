@@ -1025,11 +1025,9 @@ pub async fn validate_emails(emails: Vec<String>) -> Result<ValidationSummary, S
                 Err(_) => resolver.lookup_ip(domain).await.is_ok(),
             }
         };
-        let has_mx = match tokio::time::timeout(std::time::Duration::from_secs(5), mx_future).await
-        {
-            Ok(result) => result,
-            Err(_) => false, // timeout = treat as no MX
-        };
+        let has_mx: bool = tokio::time::timeout(std::time::Duration::from_secs(5), mx_future)
+            .await
+            .unwrap_or_default();
 
         if !has_mx {
             invalid += 1;
