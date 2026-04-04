@@ -1,5 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
+use log::{error, info};
 use std::sync::Arc;
 use tauri::State;
 use tokio::sync::Mutex;
@@ -598,9 +599,13 @@ pub async fn verify_ses_credentials(
     secret_key: String,
     region: String,
 ) -> Result<bool, String> {
+    info!("Verifying SES credentials for region {}", region);
     let client = email::ses::build_ses_client(&access_key, &secret_key, &region)
         .await
-        .map_err(|e| format!("Failed to build SES client: {}", e))?;
+        .map_err(|e| {
+            error!("Failed to build SES client: {}", e);
+            format!("Failed to build SES client: {}", e)
+        })?;
 
     email::ses::verify_credentials(&client)
         .await
@@ -637,13 +642,19 @@ pub async fn send_test_email(
             .await
             .map_err(|e| format!("Failed to build SES client: {}", e))?;
 
-    let from_address = format!("{} <{}>", from_name, from_email);
+    // Sanitize headers to prevent injection
+    let safe_from = format!(
+        "{} <{}>",
+        from_name.replace(['\r', '\n'], ""),
+        from_email.replace(['\r', '\n'], "")
+    );
+    let safe_subject = subject.replace(['\r', '\n'], "");
 
     let message_id = email::ses::send_email(
         &client,
-        &from_address,
+        &safe_from,
         &to,
-        &subject,
+        &safe_subject,
         &html_content,
         None,
         None,
@@ -660,12 +671,47 @@ pub async fn send_campaign(
     storage: State<'_, DatabaseState>,
     campaign_id: String,
 ) -> Result<CampaignSendResult, String> {
-    let storage_ref = storage.lock().await;
+    info!("Sending campaign {}", campaign_id);
     let campaign_uuid = Uuid::parse_str(&campaign_id).map_err(|e| e.to_string())?;
 
-    email::sender::send_campaign_emails(&storage_ref, campaign_uuid)
+    // Phase 1: Load data and set status to Sending (hold lock briefly)
+    let prepared = {
+        let s = storage.lock().await;
+        email::sender::prepare_campaign(&s, campaign_uuid)
+            .await
+            .map_err(|e| {
+                error!("Campaign prepare failed: {}", e);
+                format!("Campaign send failed: {}", e)
+            })?
+        // lock released here
+    };
+
+    // Phase 2: Send emails (NO lock held — UI stays responsive)
+    let (result, analytics_events) = email::sender::execute_send(&prepared)
         .await
-        .map_err(|e| format!("Campaign send failed: {}", e))
+        .map_err(|e| {
+            error!("Campaign send failed: {}", e);
+            format!("Campaign send failed: {}", e)
+        })?;
+
+    // Phase 3: Save results (hold lock briefly)
+    {
+        let s = storage.lock().await;
+        email::sender::finalize_campaign(&s, campaign_uuid, &result, analytics_events)
+            .await
+            .map_err(|e| {
+                error!("Campaign finalize failed: {}", e);
+                format!("Failed to save campaign results: {}", e)
+            })?;
+    }
+
+    info!(
+        "Campaign {} complete: {} sent, {} errors",
+        campaign_id,
+        result.sent,
+        result.errors.len()
+    );
+    Ok(result)
 }
 
 // CSV Import
@@ -692,6 +738,21 @@ pub async fn import_contacts_csv(
     let first_name_col = mapping.get("first_name").copied();
     let last_name_col = mapping.get("last_name").copied();
 
+    // Validate file path — must end in .csv
+    if !file_path.to_lowercase().ends_with(".csv") {
+        return Err("Only CSV files are allowed".to_string());
+    }
+
+    // Check file size — max 50 MB
+    let metadata = tokio::fs::metadata(&file_path)
+        .await
+        .map_err(|e| format!("Cannot access file: {}", e))?;
+    if metadata.len() > 50 * 1024 * 1024 {
+        return Err("File too large (max 50 MB)".to_string());
+    }
+
+    info!("Importing CSV: {} ({} bytes)", file_path, metadata.len());
+
     // Read file
     let content = tokio::fs::read_to_string(&file_path)
         .await
@@ -714,8 +775,13 @@ pub async fn import_contacts_csv(
     let mut imported: u32 = 0;
     let mut skipped: u32 = 0;
     let mut errors: Vec<String> = Vec::new();
+    let max_rows: usize = 100_000;
 
     for (row_idx, record) in reader.records().enumerate() {
+        if row_idx >= max_rows {
+            errors.push(format!("Import capped at {} rows", max_rows));
+            break;
+        }
         let record = match record {
             Ok(r) => r,
             Err(e) => {
@@ -913,6 +979,10 @@ const ROLE_PREFIXES: &[&str] = &[
 
 #[tauri::command]
 pub async fn validate_emails(emails: Vec<String>) -> Result<ValidationSummary, String> {
+    if emails.len() > 5000 {
+        return Err("Maximum 5,000 emails per validation request".to_string());
+    }
+
     let resolver = TokioAsyncResolver::tokio_from_system_conf()
         .map_err(|e| format!("DNS resolver error: {}", e))?;
 
@@ -950,13 +1020,17 @@ pub async fn validate_emails(emails: Vec<String>) -> Result<ValidationSummary, S
         let is_disposable = DISPOSABLE_DOMAINS.contains(&domain);
         let is_role_based = ROLE_PREFIXES.contains(&local);
 
-        // MX record check
-        let has_mx = match resolver.mx_lookup(domain).await {
-            Ok(mx) => mx.iter().next().is_some(),
-            Err(_) => {
-                // Fallback: check A record
-                resolver.lookup_ip(domain).await.is_ok()
+        // MX record check with 5s timeout
+        let mx_future = async {
+            match resolver.mx_lookup(domain).await {
+                Ok(mx) => mx.iter().next().is_some(),
+                Err(_) => resolver.lookup_ip(domain).await.is_ok(),
             }
+        };
+        let has_mx = match tokio::time::timeout(std::time::Duration::from_secs(5), mx_future).await
+        {
+            Ok(result) => result,
+            Err(_) => false, // timeout = treat as no MX
         };
 
         if !has_mx {
@@ -1046,4 +1120,24 @@ pub async fn validate_contact_list(
     drop(storage);
 
     validate_emails(emails).await
+}
+
+#[tauri::command]
+pub fn get_log_path() -> Result<String, String> {
+    let home = dirs::home_dir().ok_or("Could not find home directory")?;
+
+    // Tauri log plugin uses: ~/Library/Logs/{bundle_identifier}/mailfleet.log
+    let candidates = [
+        home.join("Library/Logs/com.abderrahim.mailfleet/mailfleet.log"),
+        home.join("Library/Logs/mailfleet/mailfleet.log"),
+    ];
+
+    for path in &candidates {
+        if path.exists() {
+            return Ok(path.to_string_lossy().to_string());
+        }
+    }
+
+    // Return the expected path even if it doesn't exist yet
+    Ok(candidates[0].to_string_lossy().to_string())
 }

@@ -35,4 +35,6 @@ aws-credential-types = "1.2"
 csv = "1.3"
 trust-dns-resolver = "0.23"
 tauri-plugin-dialog = "2"
+tauri-plugin-log = "2"
+log = "0.4"
 

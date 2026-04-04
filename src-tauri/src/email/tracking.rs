@@ -55,7 +55,6 @@ pub async fn setup_tracking(
         .topic_arn()
         .context("No topic ARN returned")?
         .to_string();
-    eprintln!("[mailfleet] SNS topic: {}", topic_arn);
 
     // 2. Create SQS queue (idempotent)
     let queue_result = sqs
@@ -68,7 +67,6 @@ pub async fn setup_tracking(
         .queue_url()
         .context("No queue URL returned")?
         .to_string();
-    eprintln!("[mailfleet] SQS queue: {}", queue_url);
 
     // Get queue ARN for subscription
     let attrs = sqs
@@ -104,7 +102,6 @@ pub async fn setup_tracking(
         .send()
         .await
         .context("Failed to subscribe SQS to SNS")?;
-    eprintln!("[mailfleet] SQS subscribed to SNS");
 
     // 5. Create SES Configuration Set (may already exist)
     let cs_exists = ses
@@ -120,7 +117,6 @@ pub async fn setup_tracking(
             .send()
             .await
             .context("Failed to create SES configuration set")?;
-        eprintln!("[mailfleet] Created SES configuration set");
     }
 
     // 6. Create event destination on the configuration set
@@ -155,7 +151,6 @@ pub async fn setup_tracking(
         .send()
         .await
         .context("Failed to create event destination")?;
-    eprintln!("[mailfleet] Event destination configured");
 
     Ok(TrackingConfig {
         configuration_set_name: CONFIG_SET_NAME.to_string(),

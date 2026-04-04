@@ -3,28 +3,34 @@ mod email;
 
 use database::{commands::*, storage::DatabaseStorage};
 use std::sync::Arc;
+use tauri_plugin_log::{Target, TargetKind, TimezoneStrategy};
 use tokio::sync::Mutex;
 
 type DatabaseState = Arc<Mutex<DatabaseStorage>>;
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Initialize database storage
     let storage = DatabaseStorage::new().expect("Failed to initialize database storage");
     let storage_state: DatabaseState = Arc::new(Mutex::new(storage));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    Target::new(TargetKind::LogDir {
+                        file_name: Some("mailfleet".into()),
+                    }),
+                    Target::new(TargetKind::Stdout),
+                ])
+                .timezone_strategy(TimezoneStrategy::UseLocal)
+                .max_file_size(5_000_000)
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
+                .build(),
+        )
         .manage(storage_state)
         .invoke_handler(tauri::generate_handler![
-            greet,
             init_database,
             get_campaigns,
             get_campaign_by_id,
@@ -58,7 +64,8 @@ pub fn run() {
             setup_tracking,
             poll_tracking_events,
             validate_emails,
-            validate_contact_list
+            validate_contact_list,
+            get_log_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

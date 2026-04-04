@@ -174,7 +174,7 @@ function Contacts() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Contacts</h1>
+            <h1>Contacts</h1>
             <p className="text-muted-foreground">
               {totalContacts} total contacts across {contactLists.length} lists
             </p>

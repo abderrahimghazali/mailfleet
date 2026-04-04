@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { DatabaseService } from '@/services/database'
 import type { Template } from '@/types/database'
 import { FileText, Plus, Eye, Edit3, Trash2 } from 'lucide-react'
+import DOMPurify from 'dompurify'
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -76,7 +77,7 @@ function Templates() {
         {/* Header Actions */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Email Templates</h1>
+            <h1>Email Templates</h1>
             <p className="text-muted-foreground">
               Create and manage reusable email templates for your campaigns
             </p>
@@ -210,7 +211,7 @@ function Templates() {
             </p>
             <div className="border rounded-lg p-4 bg-white dark:bg-zinc-900">
               <div
-                dangerouslySetInnerHTML={{ __html: previewTemplate?.html_content || '' }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewTemplate?.html_content || '') }}
                 className="prose dark:prose-invert max-w-none"
               />
             </div>

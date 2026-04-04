@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tokio::fs;
 
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+
 pub struct DatabaseStorage {
     pub data_dir: PathBuf,
 }
@@ -15,11 +18,8 @@ impl DatabaseStorage {
     }
 
     fn get_app_data_dir() -> Result<PathBuf> {
-        let home_dir = dirs::home_dir().context("Could not find home directory")?;
-
-        let data_dir = home_dir
-            .join("Library")
-            .join("Application Support")
+        let data_dir = dirs::data_dir()
+            .context("Could not find data directory")?
             .join("mailfleet")
             .join("data");
 
@@ -31,6 +31,15 @@ impl DatabaseStorage {
         fs::create_dir_all(&self.data_dir)
             .await
             .context("Failed to create data directory")?;
+
+        // Restrict directory permissions to owner only
+        #[cfg(unix)]
+        {
+            let perms = std::fs::Permissions::from_mode(0o700);
+            fs::set_permissions(&self.data_dir, perms)
+                .await
+                .context("Failed to set directory permissions")?;
+        }
 
         // Initialize all JSON files if they don't exist
         self.init_file("campaigns.json", &CampaignsData::default())
@@ -59,6 +68,15 @@ impl DatabaseStorage {
             fs::write(&file_path, json_data)
                 .await
                 .context(format!("Failed to create {}", filename))?;
+
+            // Restrict file permissions to owner only (0600)
+            #[cfg(unix)]
+            {
+                let perms = std::fs::Permissions::from_mode(0o600);
+                fs::set_permissions(&file_path, perms)
+                    .await
+                    .context(format!("Failed to set permissions on {}", filename))?;
+            }
         }
 
         Ok(())
@@ -88,6 +106,15 @@ impl DatabaseStorage {
         fs::write(&temp_path, json_data)
             .await
             .context(format!("Failed to write temp file for {}", filename))?;
+
+        // Restrict permissions before rename
+        #[cfg(unix)]
+        {
+            let perms = std::fs::Permissions::from_mode(0o600);
+            fs::set_permissions(&temp_path, perms)
+                .await
+                .context("Failed to set file permissions")?;
+        }
 
         fs::rename(&temp_path, &file_path)
             .await

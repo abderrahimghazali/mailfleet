@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use chrono::Utc;
+use log::{error, info};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -14,11 +15,17 @@ pub struct CampaignSendResult {
     pub errors: Vec<String>,
 }
 
-pub async fn send_campaign_emails(
+/// Sanitize a string for use in email headers — strip newlines to prevent header injection
+fn sanitize_header(s: &str) -> String {
+    s.replace(['\r', '\n'], "")
+}
+
+/// Load all data needed for sending, validate, update status to Sending.
+/// Returns the data needed for the send loop. Storage lock can be released after this.
+pub async fn prepare_campaign(
     storage: &DatabaseStorage,
     campaign_id: Uuid,
-) -> Result<CampaignSendResult> {
-    // Load campaign
+) -> Result<PreparedCampaign> {
     let mut campaigns_data = storage.get_campaigns().await?;
     let campaign = campaigns_data
         .campaigns
@@ -27,7 +34,6 @@ pub async fn send_campaign_emails(
         .context("Campaign not found")?
         .clone();
 
-    // Validate campaign can be sent
     match campaign.status {
         CampaignStatus::Draft | CampaignStatus::Scheduled | CampaignStatus::Paused => {}
         _ => anyhow::bail!(
@@ -36,7 +42,6 @@ pub async fn send_campaign_emails(
         ),
     }
 
-    // Validate campaign has content
     if campaign
         .content
         .as_ref()
@@ -45,31 +50,24 @@ pub async fn send_campaign_emails(
         anyhow::bail!("Campaign has no email content");
     }
 
-    // Validate campaign has contact lists
     if campaign.contact_list_ids.is_empty() {
         anyhow::bail!("Campaign has no contact lists assigned");
     }
 
-    // Load settings and build SES client
     let settings = storage.get_settings().await?;
     let access_key = settings
         .ses_settings
         .access_key_id
-        .as_ref()
+        .clone()
         .context("AWS SES Access Key not configured")?;
     let secret_key = settings
         .ses_settings
         .secret_access_key
-        .as_ref()
+        .clone()
         .context("AWS SES Secret Key not configured")?;
+    let region = settings.ses_settings.region.clone();
+    let config_set = settings.ses_settings.tracking_config_set.clone();
 
-    let client =
-        ses::build_ses_client(access_key, secret_key, &settings.ses_settings.region).await?;
-
-    let config_set = settings.ses_settings.tracking_config_set.as_deref();
-    let campaign_id_str = campaign_id.to_string();
-
-    // Load contacts and suppression list
     let contacts_data = storage.get_contacts().await?;
     let suppression_data = storage.get_suppression().await?;
     let suppressed_emails: std::collections::HashSet<String> = suppression_data
@@ -78,9 +76,8 @@ pub async fn send_campaign_emails(
         .map(|s| s.email.to_lowercase())
         .collect();
 
-    // Collect all active contacts from assigned lists (deduplicated by email)
     let mut seen_emails = std::collections::HashSet::new();
-    let mut contacts_to_send: Vec<&Contact> = Vec::new();
+    let mut contacts_to_send: Vec<Contact> = Vec::new();
 
     for contact in &contacts_data.contacts {
         let in_assigned_list = contact
@@ -88,11 +85,7 @@ pub async fn send_campaign_emails(
             .iter()
             .any(|lid| campaign.contact_list_ids.contains(lid));
 
-        if !in_assigned_list {
-            continue;
-        }
-
-        if !matches!(contact.status, ContactStatus::Active) {
+        if !in_assigned_list || !matches!(contact.status, ContactStatus::Active) {
             continue;
         }
 
@@ -102,11 +95,17 @@ pub async fn send_campaign_emails(
         }
 
         if seen_emails.insert(email_lower) {
-            contacts_to_send.push(contact);
+            contacts_to_send.push(contact.clone());
         }
     }
 
-    // Update campaign status to Sending
+    info!(
+        "Campaign {}: {} contacts to send",
+        campaign_id,
+        contacts_to_send.len()
+    );
+
+    // Update status to Sending
     if let Some(c) = campaigns_data
         .campaigns
         .iter_mut()
@@ -117,23 +116,48 @@ pub async fn send_campaign_emails(
     }
     storage.save_campaigns(&campaigns_data).await?;
 
-    // Send emails with rate limiting
+    Ok(PreparedCampaign {
+        campaign,
+        contacts: contacts_to_send,
+        access_key,
+        secret_key,
+        region,
+        config_set,
+    })
+}
+
+pub struct PreparedCampaign {
+    pub campaign: Campaign,
+    pub contacts: Vec<Contact>,
+    pub access_key: String,
+    pub secret_key: String,
+    pub region: String,
+    pub config_set: Option<String>,
+}
+
+/// Send emails — does NOT hold any storage lock. Pure network I/O.
+pub async fn execute_send(prepared: &PreparedCampaign) -> Result<(CampaignSendResult, Vec<AnalyticsEvent>)> {
+    let client =
+        ses::build_ses_client(&prepared.access_key, &prepared.secret_key, &prepared.region).await?;
+
+    let config_set = prepared.config_set.as_deref();
+    let campaign_id_str = prepared.campaign.id.to_string();
     let from_address = format!(
         "{} <{}>",
-        campaign.settings.from_name, campaign.settings.from_email
+        sanitize_header(&prepared.campaign.settings.from_name),
+        sanitize_header(&prepared.campaign.settings.from_email)
     );
-    let content = campaign.content.as_deref().unwrap_or("");
+    let content = prepared.campaign.content.as_deref().unwrap_or("");
+
     let mut result = CampaignSendResult {
         sent: 0,
         skipped: 0,
         errors: Vec::new(),
     };
-
     let mut analytics_events: Vec<AnalyticsEvent> = Vec::new();
-    let batch_size = 14; // SES default sending rate
+    let batch_size = 14;
 
-    for (i, contact) in contacts_to_send.iter().enumerate() {
-        // Merge tags: replace placeholders with contact data
+    for (i, contact) in prepared.contacts.iter().enumerate() {
         let mut personalized_content = content.to_string();
         personalized_content = personalized_content
             .replace(
@@ -143,7 +167,7 @@ pub async fn send_campaign_emails(
             .replace("{{last_name}}", contact.last_name.as_deref().unwrap_or(""))
             .replace("{{email}}", &contact.email);
 
-        let mut personalized_subject = campaign.subject.clone();
+        let mut personalized_subject = prepared.campaign.subject.clone();
         personalized_subject = personalized_subject
             .replace(
                 "{{first_name}}",
@@ -152,15 +176,14 @@ pub async fn send_campaign_emails(
             .replace("{{last_name}}", contact.last_name.as_deref().unwrap_or(""))
             .replace("{{email}}", &contact.email);
 
-        // Unsubscribe link (mailto-based since we're a desktop app with no server)
         let unsubscribe_url = format!(
             "mailto:{}?subject=Unsubscribe&body=Please%20unsubscribe%20{}",
-            campaign.settings.from_email, contact.email
+            sanitize_header(&prepared.campaign.settings.from_email),
+            contact.email
         );
         personalized_content =
             personalized_content.replace("{{unsubscribe_url}}", &unsubscribe_url);
 
-        // Auto-inject unsubscribe footer if not present
         if !personalized_content.contains("unsubscribe") {
             personalized_content.push_str(&format!(
                 "<br/><hr style=\"border:none;border-top:1px solid #eee;margin:24px 0\"/><p style=\"font-size:12px;color:#999;text-align:center\">You received this email because you're subscribed. <a href=\"{}\" style=\"color:#999\">Unsubscribe</a></p>",
@@ -168,15 +191,14 @@ pub async fn send_campaign_emails(
             ));
         }
 
-        eprintln!(
-            "[mailfleet] Sending to {} from {}",
-            contact.email, from_address
-        );
+        // Sanitize subject to prevent header injection
+        let safe_subject = sanitize_header(&personalized_subject);
+
         match ses::send_email(
             &client,
             &from_address,
             &contact.email,
-            &personalized_subject,
+            &safe_subject,
             &personalized_content,
             None,
             config_set,
@@ -184,8 +206,7 @@ pub async fn send_campaign_emails(
         )
         .await
         {
-            Ok(message_id) => {
-                eprintln!("[mailfleet] OK: {} -> {}", contact.email, message_id);
+            Ok(_message_id) => {
                 result.sent += 1;
                 analytics_events.push(AnalyticsEvent {
                     event_type: EventType::Sent,
@@ -196,18 +217,27 @@ pub async fn send_campaign_emails(
             }
             Err(e) => {
                 let err_msg = format!("{}: {}", contact.email, e);
-                eprintln!("[mailfleet] FAIL: {}", err_msg);
+                error!("Send failed: {}", err_msg);
                 result.errors.push(err_msg);
             }
         }
 
-        // Rate limit: sleep after each batch
-        if (i + 1) % batch_size == 0 && i + 1 < contacts_to_send.len() {
+        if (i + 1) % batch_size == 0 && i + 1 < prepared.contacts.len() {
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         }
     }
 
-    // Update campaign status to Sent
+    Ok((result, analytics_events))
+}
+
+/// Save results back to storage — re-acquires data from disk.
+pub async fn finalize_campaign(
+    storage: &DatabaseStorage,
+    campaign_id: Uuid,
+    result: &CampaignSendResult,
+    analytics_events: Vec<AnalyticsEvent>,
+) -> Result<()> {
+    // Update campaign status
     let mut campaigns_data = storage.get_campaigns().await?;
     if let Some(c) = campaigns_data
         .campaigns
@@ -233,7 +263,7 @@ pub async fn send_campaign_emails(
         analytics_data.campaign_analytics.push(CampaignAnalytics {
             campaign_id,
             sent: result.sent,
-            delivered: result.sent, // Assume delivered = sent initially
+            delivered: 0,
             opened: 0,
             clicked: 0,
             bounced: result.errors.len() as u32,
@@ -244,5 +274,5 @@ pub async fn send_campaign_emails(
     }
     storage.save_analytics(&analytics_data).await?;
 
-    Ok(result)
+    Ok(())
 }

@@ -138,7 +138,7 @@ function ContactListDetail() {
               <Users className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{contactList.name}</h1>
+              <h1>{contactList.name}</h1>
               <p className="text-muted-foreground">{contactList.description}</p>
             </div>
           </div>

@@ -140,7 +140,7 @@ function CampaignDetail() {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{campaign.name}</h1>
+              <h1>{campaign.name}</h1>
               <p className="text-muted-foreground">{campaign.subject}</p>
             </div>
           </div>

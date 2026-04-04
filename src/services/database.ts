@@ -205,6 +205,11 @@ export class DatabaseService {
     return invoke('poll_tracking_events');
   }
 
+  // Logs
+  static async getLogPath(): Promise<string> {
+    return invoke('get_log_path');
+  }
+
   // CSV Import
   static async importContactsCsv(filePath: string, listId: string, columnMapping: ColumnMapping, hasHeader: boolean): Promise<ImportResult> {
     return invoke('import_contacts_csv', {

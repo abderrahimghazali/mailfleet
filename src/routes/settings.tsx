@@ -374,6 +374,27 @@ function Settings() {
           </CardContent>
         </Card>
 
+        {/* Logs */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
+          <span>Having issues? Attach the log file to your <a href="https://github.com/abderrahimghazali/mailfleet/issues/new?template=bug_report.yml" target="_blank" className="text-primary underline">bug report</a>.</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={async () => {
+              try {
+                const path = await DatabaseService.getLogPath()
+                const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
+                await revealItemInDir(path)
+              } catch {
+                toast.error('Could not open log folder')
+              }
+            }}
+          >
+            Open log file
+          </Button>
+        </div>
+
         {/* Save Button */}
         <div className="flex justify-end pb-4">
           <Button onClick={handleSave} disabled={saving}>

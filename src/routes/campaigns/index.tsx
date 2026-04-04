@@ -232,7 +232,7 @@ function CampaignsIndex() {
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Campaigns</h1>
+        <h1>Campaigns</h1>
         <Button size="sm" onClick={() => navigate({ to: '/campaigns/create' })}>
           <Plus className="h-4 w-4" />
           Create Campaign
