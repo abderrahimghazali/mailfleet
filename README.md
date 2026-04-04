@@ -2,6 +2,8 @@
 
 <p align="center">
   <img src="src-tauri/icons/icon.png" alt="MailFleet" width="128" height="128">
+  <br>
+  <strong>MailFleet</strong>
 </p>
 
 <p align="center">
@@ -22,18 +24,21 @@
 ---
 
 <p align="center">
-  <img src="screenshot.png" alt="MailFleet Dashboard" width="800" />
+  <img src="https://raw.githubusercontent.com/abderrahimghazali/mailfleet/refs/heads/main/screenshot.png" alt="MailFleet Dashboard" width="800" />
 </p>
 
 ---
 
 ## Features
 
-- **Campaigns** — Create, edit, and send email campaigns with a WYSIWYG editor
-- **Contacts** — Manage contact lists, bulk import from CSV
-- **Templates** — Build reusable email templates, preview, and apply to campaigns
-- **AWS SES** — Connect your AWS credentials, verify, and send at scale
-- **Analytics** — Track delivery, opens, clicks, bounces with charts and breakdowns
+- **Campaigns** — Create, edit, and send email campaigns with Maily.to block editor
+- **Contacts** — Manage contact lists, bulk import from CSV, email validation
+- **Templates** — Build reusable email templates with drag & drop, merge tags support
+- **AWS SES** — Connect your AWS credentials, verify, and send at scale with rate limiting
+- **Analytics** — Track delivery, opens, clicks, bounces with charts and real-time event tracking
+- **Merge Tags** — Personalize emails with {{first_name}}, {{last_name}}, {{email}}
+- **Auto-Unsubscribe** — CAN-SPAM/GDPR compliant unsubscribe links auto-injected
+- **Auto-Suppression** — Bounced and complained contacts automatically flagged and skipped
 - **Cross-Platform** — Native desktop app for macOS, Windows, and Linux
 
 ## Tech Stack
@@ -43,9 +48,11 @@
 | Frontend | React 19, TypeScript 5, TailwindCSS 4, shadcn/ui |
 | Routing | TanStack Router (file-based) |
 | Tables | TanStack Table |
-| Editor | Quill 2 (WYSIWYG) |
+| Editor | Maily.to (Tiptap-based block editor) |
+| Charts | Recharts (shadcn/ui charts) |
 | Backend | Rust, Tauri 2 |
 | Email | AWS SES v2 SDK |
+| Tracking | SES + SNS + SQS event pipeline |
 | Storage | JSON file-based (portable, no database required) |
 
 ## Getting Started
@@ -80,11 +87,21 @@ The built app will be in `src-tauri/target/release/bundle/`.
 
 ## Usage
 
-1. **Configure AWS SES** — Go to Settings and enter your AWS Access Key, Secret Key, and region. Click "Test Connection" to verify.
-2. **Create Contacts** — Navigate to Contacts, create a list, and add contacts manually or import from CSV.
-3. **Design Templates** — Create reusable email templates with the WYSIWYG editor.
-4. **Launch Campaigns** — Create a campaign, assign contact lists, compose content (or load a template), and send.
-5. **Track Results** — View delivery, open, click, and bounce analytics on the Analytics page.
+1. **Configure AWS SES** — Go to Settings, follow the setup guide, enter your credentials, and click "Test Connection"
+2. **Enable Tracking** — In Settings, click "Enable Tracking" to set up open/click/bounce event tracking
+3. **Create Contacts** — Navigate to Contacts, create a list, and add contacts manually or import from CSV
+4. **Validate Emails** — Use the email validation tool to check format, MX records, and detect disposable addresses
+5. **Design Templates** — Create reusable email templates with the block editor and merge tags
+6. **Launch Campaigns** — Create a campaign, assign contact lists, compose content, and send
+7. **Track Results** — View delivery, open, click, and bounce analytics with charts
+
+## Contributing
+
+Found a bug or have an idea? We'd love to hear from you:
+
+- [Report a Bug](https://github.com/abderrahimghazali/mailfleet/issues/new?template=bug_report.yml)
+- [Request a Feature](https://github.com/abderrahimghazali/mailfleet/issues/new?template=feature_request.yml)
+- [Get Support](https://github.com/abderrahimghazali/mailfleet/issues/new?template=support.yml)
 
 ## License
 
