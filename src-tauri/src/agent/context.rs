@@ -23,7 +23,10 @@ pub async fn build_system_prompt(storage: &DatabaseStorage) -> Result<String> {
     let mut context = String::new();
 
     // Campaigns summary
-    context.push_str(&format!("\n### Campaigns ({})\n", campaigns.campaigns.len()));
+    context.push_str(&format!(
+        "\n### Campaigns ({})\n",
+        campaigns.campaigns.len()
+    ));
     for c in &campaigns.campaigns {
         context.push_str(&format!(
             "- {} | Status: {:?} | Subject: {} | Lists: {}\n",
@@ -55,9 +58,16 @@ pub async fn build_system_prompt(storage: &DatabaseStorage) -> Result<String> {
     context.push_str(&format!("Total contacts: {}\n", total_contacts));
 
     // Templates summary
-    context.push_str(&format!("\n### Templates ({})\n", templates.templates.len()));
+    context.push_str(&format!(
+        "\n### Templates ({})\n",
+        templates.templates.len()
+    ));
     for t in &templates.templates {
-        context.push_str(&format!("- {} | Subject: {}\n", sanitize_for_prompt(&t.name), sanitize_for_prompt(&t.subject)));
+        context.push_str(&format!(
+            "- {} | Subject: {}\n",
+            sanitize_for_prompt(&t.name),
+            sanitize_for_prompt(&t.subject)
+        ));
     }
 
     // Analytics summary

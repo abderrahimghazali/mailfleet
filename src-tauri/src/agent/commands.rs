@@ -99,8 +99,7 @@ pub async fn rename_agent_session(
 
 #[tauri::command]
 pub async fn check_claude_code_status() -> Result<serde_json::Value, String> {
-    let claude_bin = super::providers::find_claude_binary()
-        .ok_or("Claude Code CLI not found")?;
+    let claude_bin = super::providers::find_claude_binary().ok_or("Claude Code CLI not found")?;
 
     let output = tokio::process::Command::new(&claude_bin)
         .args(["auth", "status"])
@@ -154,7 +153,7 @@ pub async fn send_agent_message(
     let session_uuid = Uuid::parse_str(&session_id).map_err(|e| e.to_string())?;
 
     // Phase 1: Load data under lock
-    let (mut sessions_data, settings, system_prompt, history) = {
+    let (_sessions_data, settings, system_prompt, history) = {
         let s = storage.lock().await;
 
         let sessions_data = s.get_agent_sessions().await.map_err(|e| e.to_string())?;
@@ -200,7 +199,11 @@ pub async fn send_agent_message(
     {
         let s = storage.lock().await;
         let mut fresh_data = s.get_agent_sessions().await.map_err(|e| e.to_string())?;
-        if let Some(session) = fresh_data.sessions.iter_mut().find(|s| s.id == session_uuid) {
+        if let Some(session) = fresh_data
+            .sessions
+            .iter_mut()
+            .find(|s| s.id == session_uuid)
+        {
             session.messages.push(user_msg);
             session.updated_at = Utc::now();
         }
@@ -231,87 +234,88 @@ pub async fn send_agent_message(
         if let Some(action_end) = ai_response.find("[/ACTION]") {
             let action_json = &ai_response[action_start + 8..action_end];
             match serde_json::from_str::<AgentAction>(action_json) {
-            Ok(action) => {
-                let s = storage.lock().await;
-                match action {
-                    AgentAction::CreateTemplate {
-                        name,
-                        subject,
-                        html_content,
-                        text_content,
-                    } => {
-                        let mut templates = s.get_templates().await.map_err(|e| e.to_string())?;
-                        let template = Template {
-                            id: Uuid::new_v4(),
-                            name: name.clone(),
+                Ok(action) => {
+                    let s = storage.lock().await;
+                    match action {
+                        AgentAction::CreateTemplate {
+                            name,
                             subject,
                             html_content,
                             text_content,
-                            created_at: Utc::now(),
-                            updated_at: Utc::now(),
-                        };
-                        templates.templates.push(template);
-                        s.save_templates(&templates)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        info!("Agent created template: {}", name);
-                        final_response.push_str("\n\n> Template created successfully.");
-                    }
-                    AgentAction::CreateCampaign {
-                        name,
-                        subject,
-                        from_email,
-                        from_name,
-                        contact_list_names,
-                        html_content,
-                    } => {
-                        let mut campaigns =
-                            s.get_campaigns().await.map_err(|e| e.to_string())?;
-                        let contacts_data =
-                            s.get_contacts().await.map_err(|e| e.to_string())?;
-
-                        // Resolve contact list names to IDs
-                        let contact_list_ids: Vec<Uuid> = contact_list_names
-                            .iter()
-                            .filter_map(|name| {
-                                contacts_data
-                                    .contact_lists
-                                    .iter()
-                                    .find(|l| l.name.to_lowercase() == name.to_lowercase())
-                                    .map(|l| l.id)
-                            })
-                            .collect();
-
-                        let campaign = Campaign {
-                            id: Uuid::new_v4(),
-                            name: name.clone(),
+                        } => {
+                            let mut templates =
+                                s.get_templates().await.map_err(|e| e.to_string())?;
+                            let template = Template {
+                                id: Uuid::new_v4(),
+                                name: name.clone(),
+                                subject,
+                                html_content,
+                                text_content,
+                                created_at: Utc::now(),
+                                updated_at: Utc::now(),
+                            };
+                            templates.templates.push(template);
+                            s.save_templates(&templates)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                            info!("Agent created template: {}", name);
+                            final_response.push_str("\n\n> Template created successfully.");
+                        }
+                        AgentAction::CreateCampaign {
+                            name,
                             subject,
-                            content: html_content,
-                            template_id: None,
-                            contact_list_ids,
-                            status: CampaignStatus::Draft,
-                            scheduled_at: None,
-                            created_at: Utc::now(),
-                            updated_at: Utc::now(),
-                            settings: CampaignSettings {
-                                from_email,
-                                from_name,
-                                reply_to: None,
-                            },
-                        };
-                        campaigns.campaigns.push(campaign);
-                        s.save_campaigns(&campaigns)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        info!("Agent created campaign: {}", name);
-                        final_response.push_str("\n\n> Campaign created successfully.");
+                            from_email,
+                            from_name,
+                            contact_list_names,
+                            html_content,
+                        } => {
+                            let mut campaigns =
+                                s.get_campaigns().await.map_err(|e| e.to_string())?;
+                            let contacts_data =
+                                s.get_contacts().await.map_err(|e| e.to_string())?;
+
+                            // Resolve contact list names to IDs
+                            let contact_list_ids: Vec<Uuid> = contact_list_names
+                                .iter()
+                                .filter_map(|name| {
+                                    contacts_data
+                                        .contact_lists
+                                        .iter()
+                                        .find(|l| l.name.to_lowercase() == name.to_lowercase())
+                                        .map(|l| l.id)
+                                })
+                                .collect();
+
+                            let campaign = Campaign {
+                                id: Uuid::new_v4(),
+                                name: name.clone(),
+                                subject,
+                                content: html_content,
+                                template_id: None,
+                                contact_list_ids,
+                                status: CampaignStatus::Draft,
+                                scheduled_at: None,
+                                created_at: Utc::now(),
+                                updated_at: Utc::now(),
+                                settings: CampaignSettings {
+                                    from_email,
+                                    from_name,
+                                    reply_to: None,
+                                },
+                            };
+                            campaigns.campaigns.push(campaign);
+                            s.save_campaigns(&campaigns)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                            info!("Agent created campaign: {}", name);
+                            final_response.push_str("\n\n> Campaign created successfully.");
+                        }
                     }
                 }
-            }
-            Err(e) => {
-                error!("Failed to parse ACTION block: {} — raw: {}", e, action_json);
-                final_response.push_str("\n\n> Warning: I tried to create something but the request could not be processed. Please try again.");
-            }
+                Err(e) => {
+                    error!("Failed to parse ACTION block: {} — raw: {}", e, action_json);
+                    final_response.push_str("\n\n> Warning: I tried to create something but the request could not be processed. Please try again.");
+                }
             }
         }
     }
@@ -322,9 +326,9 @@ pub async fn send_agent_message(
             &final_response
                 .find("[ACTION]")
                 .and_then(|start| {
-                    final_response.find("[/ACTION]").map(|end| {
-                        final_response[start..end + 9].to_string()
-                    })
+                    final_response
+                        .find("[/ACTION]")
+                        .map(|end| final_response[start..end + 9].to_string())
                 })
                 .unwrap_or_default(),
             "",
@@ -353,9 +357,11 @@ pub async fn send_agent_message(
 
             // Auto-title: use first user message as title if still default
             if session.title == "New Chat" && session.messages.len() <= 2 {
-                if let Some(first_user) = session.messages.iter().find(|m| {
-                    matches!(m.role, MessageRole::User)
-                }) {
+                if let Some(first_user) = session
+                    .messages
+                    .iter()
+                    .find(|m| matches!(m.role, MessageRole::User))
+                {
                     let title = if first_user.content.chars().count() > 40 {
                         let truncated: String = first_user.content.chars().take(40).collect();
                         format!("{}...", truncated)

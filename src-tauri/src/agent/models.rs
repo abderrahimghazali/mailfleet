@@ -2,19 +2,15 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub enum AIProvider {
+    #[default]
     Anthropic,
     ClaudeCode,
     OpenAI,
     Custom,
 }
 
-impl Default for AIProvider {
-    fn default() -> Self {
-        Self::Anthropic
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIProviderSettings {

@@ -14,6 +14,7 @@ static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
 });
 
 /// Resolve API key from Claude Code's local session
+#[allow(dead_code)]
 fn resolve_claude_code_key() -> Option<String> {
     // 1. Check ANTHROPIC_API_KEY env var
     if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
@@ -26,7 +27,12 @@ fn resolve_claude_code_key() -> Option<String> {
     #[cfg(target_os = "macos")]
     {
         let output = std::process::Command::new("security")
-            .args(["find-generic-password", "-s", "Claude Code-credentials", "-w"])
+            .args([
+                "find-generic-password",
+                "-s",
+                "Claude Code-credentials",
+                "-w",
+            ])
             .output()
             .ok()?;
 
@@ -275,7 +281,10 @@ async fn send_openai_compatible(
     messages: &[ChatMessage],
     session_id: &str,
 ) -> Result<String> {
-    info!("Calling OpenAI-compatible API at {} with model {}", endpoint, model);
+    info!(
+        "Calling OpenAI-compatible API at {} with model {}",
+        endpoint, model
+    );
 
     let client = &*HTTP_CLIENT;
 
