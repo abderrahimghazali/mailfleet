@@ -136,7 +136,9 @@ pub struct PreparedCampaign {
 }
 
 /// Send emails — does NOT hold any storage lock. Pure network I/O.
-pub async fn execute_send(prepared: &PreparedCampaign) -> Result<(CampaignSendResult, Vec<AnalyticsEvent>)> {
+pub async fn execute_send(
+    prepared: &PreparedCampaign,
+) -> Result<(CampaignSendResult, Vec<AnalyticsEvent>)> {
     let client =
         ses::build_ses_client(&prepared.access_key, &prepared.secret_key, &prepared.region).await?;
 

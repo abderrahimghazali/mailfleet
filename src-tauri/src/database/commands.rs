@@ -687,12 +687,10 @@ pub async fn send_campaign(
     };
 
     // Phase 2: Send emails (NO lock held — UI stays responsive)
-    let (result, analytics_events) = email::sender::execute_send(&prepared)
-        .await
-        .map_err(|e| {
-            error!("Campaign send failed: {}", e);
-            format!("Campaign send failed: {}", e)
-        })?;
+    let (result, analytics_events) = email::sender::execute_send(&prepared).await.map_err(|e| {
+        error!("Campaign send failed: {}", e);
+        format!("Campaign send failed: {}", e)
+    })?;
 
     // Phase 3: Save results (hold lock briefly)
     {
