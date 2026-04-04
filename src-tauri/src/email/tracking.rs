@@ -1,10 +1,7 @@
 use anyhow::{Context, Result};
 use aws_config::Region;
 use aws_credential_types::Credentials;
-use aws_sdk_sesv2::types::{
-    EventDestinationDefinition, EventType as SesEventType,
-    SnsDestination,
-};
+use aws_sdk_sesv2::types::{EventDestinationDefinition, EventType as SesEventType, SnsDestination};
 use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
 use chrono::Utc;
@@ -94,10 +91,7 @@ pub async fn setup_tracking(
     );
     sqs.set_queue_attributes()
         .queue_url(&queue_url)
-        .attributes(
-            aws_sdk_sqs::types::QueueAttributeName::Policy,
-            policy,
-        )
+        .attributes(aws_sdk_sqs::types::QueueAttributeName::Policy, policy)
         .send()
         .await
         .context("Failed to set SQS policy")?;
@@ -255,13 +249,19 @@ pub async fn poll_events(
                                             }
                                         }
                                         // Add to suppression list
-                                        if !suppression_data.suppressed_emails.iter().any(|s| s.email.to_lowercase() == email_lower) {
-                                            suppression_data.suppressed_emails.push(SuppressedEmail {
-                                                email: email_lower,
-                                                reason: SuppressionReason::Bounced,
-                                                timestamp: Utc::now(),
-                                                campaign_id: Some(campaign_uuid),
-                                            });
+                                        if !suppression_data
+                                            .suppressed_emails
+                                            .iter()
+                                            .any(|s| s.email.to_lowercase() == email_lower)
+                                        {
+                                            suppression_data.suppressed_emails.push(
+                                                SuppressedEmail {
+                                                    email: email_lower,
+                                                    reason: SuppressionReason::Bounced,
+                                                    timestamp: Utc::now(),
+                                                    campaign_id: Some(campaign_uuid),
+                                                },
+                                            );
                                             suppression_changed = true;
                                         }
                                     }
@@ -276,13 +276,19 @@ pub async fn poll_events(
                                                 contacts_changed = true;
                                             }
                                         }
-                                        if !suppression_data.suppressed_emails.iter().any(|s| s.email.to_lowercase() == email_lower) {
-                                            suppression_data.suppressed_emails.push(SuppressedEmail {
-                                                email: email_lower,
-                                                reason: SuppressionReason::Complained,
-                                                timestamp: Utc::now(),
-                                                campaign_id: Some(campaign_uuid),
-                                            });
+                                        if !suppression_data
+                                            .suppressed_emails
+                                            .iter()
+                                            .any(|s| s.email.to_lowercase() == email_lower)
+                                        {
+                                            suppression_data.suppressed_emails.push(
+                                                SuppressedEmail {
+                                                    email: email_lower,
+                                                    reason: SuppressionReason::Complained,
+                                                    timestamp: Utc::now(),
+                                                    campaign_id: Some(campaign_uuid),
+                                                },
+                                            );
                                             suppression_changed = true;
                                         }
                                     }

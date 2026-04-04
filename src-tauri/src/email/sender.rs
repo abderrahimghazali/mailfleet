@@ -136,19 +136,29 @@ pub async fn send_campaign_emails(
         // Merge tags: replace placeholders with contact data
         let mut personalized_content = content.to_string();
         personalized_content = personalized_content
-            .replace("{{first_name}}", contact.first_name.as_deref().unwrap_or(""))
+            .replace(
+                "{{first_name}}",
+                contact.first_name.as_deref().unwrap_or(""),
+            )
             .replace("{{last_name}}", contact.last_name.as_deref().unwrap_or(""))
             .replace("{{email}}", &contact.email);
 
         let mut personalized_subject = campaign.subject.clone();
         personalized_subject = personalized_subject
-            .replace("{{first_name}}", contact.first_name.as_deref().unwrap_or(""))
+            .replace(
+                "{{first_name}}",
+                contact.first_name.as_deref().unwrap_or(""),
+            )
             .replace("{{last_name}}", contact.last_name.as_deref().unwrap_or(""))
             .replace("{{email}}", &contact.email);
 
         // Unsubscribe link (mailto-based since we're a desktop app with no server)
-        let unsubscribe_url = format!("mailto:{}?subject=Unsubscribe&body=Please%20unsubscribe%20{}", campaign.settings.from_email, contact.email);
-        personalized_content = personalized_content.replace("{{unsubscribe_url}}", &unsubscribe_url);
+        let unsubscribe_url = format!(
+            "mailto:{}?subject=Unsubscribe&body=Please%20unsubscribe%20{}",
+            campaign.settings.from_email, contact.email
+        );
+        personalized_content =
+            personalized_content.replace("{{unsubscribe_url}}", &unsubscribe_url);
 
         // Auto-inject unsubscribe footer if not present
         if !personalized_content.contains("unsubscribe") {
@@ -158,7 +168,10 @@ pub async fn send_campaign_emails(
             ));
         }
 
-        eprintln!("[mailfleet] Sending to {} from {}", contact.email, from_address);
+        eprintln!(
+            "[mailfleet] Sending to {} from {}",
+            contact.email, from_address
+        );
         match ses::send_email(
             &client,
             &from_address,

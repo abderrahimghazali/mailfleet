@@ -13,6 +13,7 @@ export function EmailEditor({ contentJson, contentHtml, onChange }: EmailEditorP
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdate = useCallback((editor: any) => {
     const json = editor.getJSON()
     const html = editor.getHTML()

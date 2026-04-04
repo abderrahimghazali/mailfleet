@@ -639,10 +639,18 @@ pub async fn send_test_email(
 
     let from_address = format!("{} <{}>", from_name, from_email);
 
-    let message_id =
-        email::ses::send_email(&client, &from_address, &to, &subject, &html_content, None, None, None)
-            .await
-            .map_err(|e| format!("Failed to send test email: {}", e))?;
+    let message_id = email::ses::send_email(
+        &client,
+        &from_address,
+        &to,
+        &subject,
+        &html_content,
+        None,
+        None,
+        None,
+    )
+    .await
+    .map_err(|e| format!("Failed to send test email: {}", e))?;
 
     Ok(message_id)
 }
@@ -806,9 +814,10 @@ pub async fn setup_tracking(
         .as_ref()
         .ok_or("AWS SES Secret Key not configured")?;
 
-    let config = email::tracking::setup_tracking(access_key, secret_key, &settings.ses_settings.region)
-        .await
-        .map_err(|e| format!("Tracking setup failed: {}", e))?;
+    let config =
+        email::tracking::setup_tracking(access_key, secret_key, &settings.ses_settings.region)
+            .await
+            .map_err(|e| format!("Tracking setup failed: {}", e))?;
 
     // Save tracking config to settings
     let mut updated_settings = settings.clone();
@@ -823,9 +832,7 @@ pub async fn setup_tracking(
 }
 
 #[tauri::command]
-pub async fn poll_tracking_events(
-    storage: State<'_, DatabaseState>,
-) -> Result<u32, String> {
+pub async fn poll_tracking_events(storage: State<'_, DatabaseState>) -> Result<u32, String> {
     let storage = storage.lock().await;
     let settings = storage.get_settings().await.map_err(|e| e.to_string())?;
 
@@ -845,25 +852,63 @@ pub async fn poll_tracking_events(
         .as_ref()
         .ok_or("Tracking not configured. Run Setup Tracking first.")?;
 
-    email::tracking::poll_events(&storage, access_key, secret_key, &settings.ses_settings.region, queue_url)
-        .await
-        .map_err(|e| format!("Poll failed: {}", e))
+    email::tracking::poll_events(
+        &storage,
+        access_key,
+        secret_key,
+        &settings.ses_settings.region,
+        queue_url,
+    )
+    .await
+    .map_err(|e| format!("Poll failed: {}", e))
 }
 
 // Email validation
 const DISPOSABLE_DOMAINS: &[&str] = &[
-    "mailinator.com", "guerrillamail.com", "tempmail.com", "throwaway.email",
-    "yopmail.com", "sharklasers.com", "guerrillamailblock.com", "grr.la",
-    "dispostable.com", "trashmail.com", "fakeinbox.com", "mailnesia.com",
-    "maildrop.cc", "discard.email", "temp-mail.org", "10minutemail.com",
-    "tempail.com", "burnermail.io", "getnada.com", "mohmal.com",
-    "emailondeck.com", "crazymailing.com", "tmail.ws",
+    "mailinator.com",
+    "guerrillamail.com",
+    "tempmail.com",
+    "throwaway.email",
+    "yopmail.com",
+    "sharklasers.com",
+    "guerrillamailblock.com",
+    "grr.la",
+    "dispostable.com",
+    "trashmail.com",
+    "fakeinbox.com",
+    "mailnesia.com",
+    "maildrop.cc",
+    "discard.email",
+    "temp-mail.org",
+    "10minutemail.com",
+    "tempail.com",
+    "burnermail.io",
+    "getnada.com",
+    "mohmal.com",
+    "emailondeck.com",
+    "crazymailing.com",
+    "tmail.ws",
 ];
 
 const ROLE_PREFIXES: &[&str] = &[
-    "admin", "info", "support", "sales", "contact", "noreply", "no-reply",
-    "webmaster", "postmaster", "abuse", "help", "office", "mail",
-    "billing", "marketing", "team", "hello", "enquiries",
+    "admin",
+    "info",
+    "support",
+    "sales",
+    "contact",
+    "noreply",
+    "no-reply",
+    "webmaster",
+    "postmaster",
+    "abuse",
+    "help",
+    "office",
+    "mail",
+    "billing",
+    "marketing",
+    "team",
+    "hello",
+    "enquiries",
 ];
 
 #[tauri::command]
@@ -884,7 +929,8 @@ pub async fn validate_emails(emails: Vec<String>) -> Result<ValidationSummary, S
 
         // Format check
         let parts: Vec<&str> = email.split('@').collect();
-        if parts.len() != 2 || parts[0].is_empty() || parts[1].is_empty() || !parts[1].contains('.') {
+        if parts.len() != 2 || parts[0].is_empty() || parts[1].is_empty() || !parts[1].contains('.')
+        {
             invalid += 1;
             results.push(EmailValidationResult {
                 email: email.clone(),
@@ -902,11 +948,11 @@ pub async fn validate_emails(emails: Vec<String>) -> Result<ValidationSummary, S
         let domain = parts[1];
 
         let is_disposable = DISPOSABLE_DOMAINS.contains(&domain);
-        let is_role_based = ROLE_PREFIXES.iter().any(|p| local == *p);
+        let is_role_based = ROLE_PREFIXES.contains(&local);
 
         // MX record check
         let has_mx = match resolver.mx_lookup(domain).await {
-            Ok(mx) => !mx.iter().next().is_none(),
+            Ok(mx) => mx.iter().next().is_some(),
             Err(_) => {
                 // Fallback: check A record
                 resolver.lookup_ip(domain).await.is_ok()

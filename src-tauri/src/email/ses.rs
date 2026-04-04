@@ -25,6 +25,7 @@ pub async fn verify_credentials(client: &Client) -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn send_email(
     client: &Client,
     from_address: &str,
@@ -91,13 +92,10 @@ pub async fn send_email(
         );
     }
 
-    let result = request
-        .send()
-        .await
-        .map_err(|e| {
-            let msg = format!("{:?}", e);
-            anyhow::anyhow!("SES error: {}", msg)
-        })?;
+    let result = request.send().await.map_err(|e| {
+        let msg = format!("{:?}", e);
+        anyhow::anyhow!("SES error: {}", msg)
+    })?;
 
     Ok(result.message_id().unwrap_or("unknown").to_string())
 }

@@ -1,0 +1,32 @@
+name: Support Request
+description: Get help with setup or usage
+title: "[Support]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: Need help? Ask away.
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+      placeholder: Describe your issue or question...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: What have you tried?
+      placeholder: Any steps you've already taken...
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      options:
+        - AWS SES setup
+        - Campaign sending
+        - Contacts / CSV import
+        - Templates / Editor
+        - Analytics / Tracking
+        - Installation
+        - Other
