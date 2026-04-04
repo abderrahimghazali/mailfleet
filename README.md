@@ -7,13 +7,21 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/abderrahimghazali/mailfleet"><img src="https://img.shields.io/badge/Open%20Source-%E2%9D%A4%EF%B8%8F-blue" alt="Open Source"></a>
+  <a href="https://tauri.app/"><img src="https://img.shields.io/badge/Built%20with-Tauri%202-24C8D8?logo=tauri&logoColor=white" alt="Built with Tauri"></a>
+  <a href="https://reactjs.org/"><img src="https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript-61DAFB?logo=react&logoColor=white" alt="Frontend"></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Backend-Rust-DEA584?logo=rust&logoColor=white" alt="Backend"></a>
+  <a href="https://aws.amazon.com/ses/"><img src="https://img.shields.io/badge/Email-AWS%20SES%20v2-FF9900?logo=amazonaws&logoColor=white" alt="AWS SES"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/abderrahimghazali/mailfleet/actions/workflows/lint.yml"><img src="https://github.com/abderrahimghazali/mailfleet/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
-  <img src="https://img.shields.io/badge/Tauri-2.0-24C8D8?logo=tauri&logoColor=white" alt="Tauri 2">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19">
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5">
-  <img src="https://img.shields.io/badge/Rust-1.75+-DEA584?logo=rust&logoColor=white" alt="Rust">
-  <img src="https://img.shields.io/badge/AWS_SES-v2-FF9900?logo=amazonaws&logoColor=white" alt="AWS SES">
-  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+  <a href="https://github.com/abderrahimghazali/mailfleet/releases/latest"><img src="https://img.shields.io/github/v/release/abderrahimghazali/mailfleet?label=Latest%20Release&color=brightgreen" alt="Latest Release"></a>
+  <a href="https://github.com/abderrahimghazali/mailfleet/stargazers"><img src="https://img.shields.io/github/stars/abderrahimghazali/mailfleet?style=flat&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/abderrahimghazali/mailfleet/issues"><img src="https://img.shields.io/github/issues/abderrahimghazali/mailfleet?color=orange" alt="Issues"></a>
+  <img src="https://img.shields.io/badge/Platform-macOS-000?logo=apple&logoColor=white" alt="macOS">
+  <img src="https://img.shields.io/badge/AI%20Powered-%F0%9F%A4%96-blueviolet" alt="AI Powered">
 </p>
 
 <p align="center">
