@@ -1,3 +1,4 @@
+use crate::agent::models::AgentSessionsData;
 use crate::database::models::*;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -53,6 +54,8 @@ impl DatabaseStorage {
         self.init_file("analytics.json", &AnalyticsData::default())
             .await?;
         self.init_file("suppression.json", &SuppressionData::default())
+            .await?;
+        self.init_file("agent_sessions.json", &AgentSessionsData::default())
             .await?;
 
         Ok(())
@@ -175,5 +178,14 @@ impl DatabaseStorage {
 
     pub async fn save_suppression(&self, data: &SuppressionData) -> Result<()> {
         self.write_file("suppression.json", data).await
+    }
+
+    // Agent session operations
+    pub async fn get_agent_sessions(&self) -> Result<AgentSessionsData> {
+        self.read_file("agent_sessions.json").await
+    }
+
+    pub async fn save_agent_sessions(&self, data: &AgentSessionsData) -> Result<()> {
+        self.write_file("agent_sessions.json", data).await
     }
 }

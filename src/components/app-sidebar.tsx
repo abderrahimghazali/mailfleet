@@ -3,6 +3,7 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import {
   BarChart3,
+  Bot,
   FileText,
   Github,
   Home,
@@ -116,6 +117,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              data-active={isActive(route.agents)}
+              className="transition-all duration-150"
+            >
+              <Link to={route.agents}>
+                <Bot className="size-4" />
+                <span>Agent</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild

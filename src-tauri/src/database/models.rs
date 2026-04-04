@@ -104,6 +104,8 @@ pub enum Theme {
 pub struct Settings {
     pub ses_settings: SesSettings,
     pub app_settings: AppSettings,
+    #[serde(default)]
+    pub ai_settings: crate::agent::models::AIProviderSettings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -271,6 +273,7 @@ impl Default for Settings {
                 default_from_email: None,
                 default_from_name: None,
             },
+            ai_settings: Default::default(),
         }
     }
 }

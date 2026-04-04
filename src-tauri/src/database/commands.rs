@@ -428,6 +428,7 @@ pub async fn get_settings(storage: State<'_, DatabaseState>) -> Result<Settings,
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn update_settings(
     storage: State<'_, DatabaseState>,
     ses_access_key: Option<String>,
@@ -436,6 +437,10 @@ pub async fn update_settings(
     default_from_email: Option<String>,
     default_from_name: Option<String>,
     theme: Option<String>,
+    ai_provider: Option<String>,
+    ai_api_key: Option<String>,
+    ai_model: Option<String>,
+    ai_custom_endpoint: Option<String>,
 ) -> Result<Settings, String> {
     let storage = storage.lock().await;
     let mut settings = storage.get_settings().await.map_err(|e| e.to_string())?;
@@ -459,6 +464,27 @@ pub async fn update_settings(
         settings.app_settings.theme = match theme_str.as_str() {
             "dark" => Theme::Dark,
             _ => Theme::Light,
+        };
+    }
+    if let Some(provider) = ai_provider {
+        settings.ai_settings.provider = match provider.as_str() {
+            "ClaudeCode" => crate::agent::models::AIProvider::ClaudeCode,
+            "OpenAI" => crate::agent::models::AIProvider::OpenAI,
+            "Custom" => crate::agent::models::AIProvider::Custom,
+            _ => crate::agent::models::AIProvider::Anthropic,
+        };
+    }
+    if let Some(key) = ai_api_key {
+        settings.ai_settings.api_key = if key.is_empty() { None } else { Some(key) };
+    }
+    if let Some(model) = ai_model {
+        settings.ai_settings.model = model;
+    }
+    if let Some(endpoint) = ai_custom_endpoint {
+        settings.ai_settings.custom_endpoint = if endpoint.is_empty() {
+            None
+        } else {
+            Some(endpoint)
         };
     }
 

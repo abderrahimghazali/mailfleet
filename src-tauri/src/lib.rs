@@ -1,3 +1,4 @@
+mod agent;
 mod database;
 mod email;
 
@@ -66,6 +67,13 @@ pub fn run() {
             validate_emails,
             validate_contact_list,
             get_log_path,
+            agent::commands::get_agent_sessions,
+            agent::commands::create_agent_session,
+            agent::commands::delete_agent_session,
+            agent::commands::rename_agent_session,
+            agent::commands::send_agent_message,
+            agent::commands::get_ai_provider_models,
+            agent::commands::check_claude_code_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

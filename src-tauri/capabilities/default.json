@@ -9,6 +9,7 @@
     "opener:default",
     "opener:allow-reveal-item-in-dir",
     "log:default",
+    "core:event:default",
     "dialog:default"
   ]
 }

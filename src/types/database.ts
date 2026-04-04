@@ -138,6 +138,44 @@ export interface ValidationSummary {
   results: EmailValidationResult[];
 }
 
+// AI Agent types
+export type AIProvider = 'Anthropic' | 'ClaudeCode' | 'OpenAI' | 'Custom';
+export type MessageRole = 'User' | 'Assistant';
+
+export interface AIProviderSettings {
+  provider: AIProvider;
+  api_key?: string;
+  model: string;
+  custom_endpoint?: string;
+}
+
+export interface AgentMessage {
+  id: string;
+  role: MessageRole;
+  content: string;
+  timestamp: string;
+}
+
+export interface AgentSession {
+  id: string;
+  title: string;
+  messages: AgentMessage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentStreamChunk {
+  session_id: string;
+  chunk: string;
+  done: boolean;
+  full_response?: string;
+}
+
+export interface QCMQuestion {
+  question: string;
+  options: string[];
+}
+
 // API Request/Response types
 export interface CreateCampaignRequest {
   name: string;
@@ -196,4 +234,8 @@ export interface UpdateSettingsRequest {
   default_from_email?: string;
   default_from_name?: string;
   theme?: string;
+  ai_provider?: string;
+  ai_api_key?: string;
+  ai_model?: string;
+  ai_custom_endpoint?: string;
 }

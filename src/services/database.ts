@@ -153,6 +153,10 @@ export class DatabaseService {
       defaultFromEmail: request.default_from_email,
       defaultFromName: request.default_from_name,
       theme: request.theme,
+      aiProvider: request.ai_provider,
+      aiApiKey: request.ai_api_key,
+      aiModel: request.ai_model,
+      aiCustomEndpoint: request.ai_custom_endpoint,
     });
   }
 
@@ -185,6 +189,35 @@ export class DatabaseService {
 
   static async sendTestEmail(to: string, subject: string, htmlContent: string, fromEmail: string, fromName: string): Promise<string> {
     return invoke('send_test_email', { to, subject, htmlContent, fromEmail, fromName });
+  }
+
+  // Agent
+  static async getAgentSessions(): Promise<import('../types/database').AgentSession[]> {
+    return invoke('get_agent_sessions');
+  }
+
+  static async createAgentSession(title: string): Promise<import('../types/database').AgentSession> {
+    return invoke('create_agent_session', { title });
+  }
+
+  static async deleteAgentSession(id: string): Promise<void> {
+    return invoke('delete_agent_session', { id });
+  }
+
+  static async renameAgentSession(id: string, title: string): Promise<import('../types/database').AgentSession> {
+    return invoke('rename_agent_session', { id, title });
+  }
+
+  static async sendAgentMessage(sessionId: string, message: string): Promise<import('../types/database').AgentMessage> {
+    return invoke('send_agent_message', { sessionId, message });
+  }
+
+  static async checkClaudeCodeStatus(): Promise<{ loggedIn: boolean; email?: string; orgName?: string; subscriptionType?: string }> {
+    return invoke('check_claude_code_status');
+  }
+
+  static async getAiProviderModels(provider: string): Promise<string[]> {
+    return invoke('get_ai_provider_models', { provider });
   }
 
   // Validation
