@@ -405,8 +405,17 @@ async fn send_claude_code_cli(
         "Claude Code CLI not found. Install it with: npm install -g @anthropic-ai/claude-code",
     )?;
 
+    // Ensure PATH includes common binary locations for bundled app
+    let home_dir = dirs::home_dir().unwrap_or_default();
+    let expanded_path = format!(
+        "/opt/homebrew/bin:/usr/local/bin:{}/.npm-global/bin:{}",
+        home_dir.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+
     let output = tokio::process::Command::new(&claude_bin)
         .args(["-p", &full_prompt, "--output-format", "text"])
+        .env("PATH", &expanded_path)
         .env("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
@@ -440,7 +449,37 @@ async fn send_claude_code_cli(
 }
 
 pub fn find_claude_binary() -> Option<String> {
-    if let Ok(output) = std::process::Command::new("which").arg("claude").output() {
+    let home = dirs::home_dir()?;
+
+    // Check common paths first (bundled apps don't inherit shell PATH)
+    let candidates = [
+        std::path::PathBuf::from("/opt/homebrew/bin/claude"),
+        std::path::PathBuf::from("/usr/local/bin/claude"),
+        home.join(".npm-global/bin/claude"),
+        home.join(".nvm/current/bin/claude"),
+        home.join(".local/bin/claude"),
+        home.join(".volta/bin/claude"),
+        std::path::PathBuf::from("/usr/bin/claude"),
+    ];
+
+    for path in &candidates {
+        if path.exists() {
+            return Some(path.to_string_lossy().to_string());
+        }
+    }
+
+    // Fallback: try which with expanded PATH
+    let expanded_path = format!(
+        "/opt/homebrew/bin:/usr/local/bin:{}/.npm-global/bin:{}/.nvm/current/bin:{}",
+        home.display(),
+        home.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    if let Ok(output) = std::process::Command::new("which")
+        .arg("claude")
+        .env("PATH", &expanded_path)
+        .output()
+    {
         if output.status.success() {
             let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !path.is_empty() {
@@ -448,15 +487,6 @@ pub fn find_claude_binary() -> Option<String> {
             }
         }
     }
-    let home = dirs::home_dir()?;
-    for path in [
-        home.join(".npm-global/bin/claude"),
-        std::path::PathBuf::from("/usr/local/bin/claude"),
-        std::path::PathBuf::from("/opt/homebrew/bin/claude"),
-    ] {
-        if path.exists() {
-            return Some(path.to_string_lossy().to_string());
-        }
-    }
+
     None
 }

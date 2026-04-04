@@ -101,8 +101,16 @@ pub async fn rename_agent_session(
 pub async fn check_claude_code_status() -> Result<serde_json::Value, String> {
     let claude_bin = super::providers::find_claude_binary().ok_or("Claude Code CLI not found")?;
 
+    let home_dir = dirs::home_dir().unwrap_or_default();
+    let expanded_path = format!(
+        "/opt/homebrew/bin:/usr/local/bin:{}/.npm-global/bin:{}",
+        home_dir.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+
     let output = tokio::process::Command::new(&claude_bin)
         .args(["auth", "status"])
+        .env("PATH", &expanded_path)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .output()
