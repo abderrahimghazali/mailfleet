@@ -11,7 +11,6 @@ pub enum AIProvider {
     Custom,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIProviderSettings {
     pub provider: AIProvider,
