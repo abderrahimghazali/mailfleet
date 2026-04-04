@@ -133,13 +133,38 @@ pub async fn send_campaign_emails(
     let batch_size = 14; // SES default sending rate
 
     for (i, contact) in contacts_to_send.iter().enumerate() {
+        // Merge tags: replace placeholders with contact data
+        let mut personalized_content = content.to_string();
+        personalized_content = personalized_content
+            .replace("{{first_name}}", contact.first_name.as_deref().unwrap_or(""))
+            .replace("{{last_name}}", contact.last_name.as_deref().unwrap_or(""))
+            .replace("{{email}}", &contact.email);
+
+        let mut personalized_subject = campaign.subject.clone();
+        personalized_subject = personalized_subject
+            .replace("{{first_name}}", contact.first_name.as_deref().unwrap_or(""))
+            .replace("{{last_name}}", contact.last_name.as_deref().unwrap_or(""))
+            .replace("{{email}}", &contact.email);
+
+        // Unsubscribe link (mailto-based since we're a desktop app with no server)
+        let unsubscribe_url = format!("mailto:{}?subject=Unsubscribe&body=Please%20unsubscribe%20{}", campaign.settings.from_email, contact.email);
+        personalized_content = personalized_content.replace("{{unsubscribe_url}}", &unsubscribe_url);
+
+        // Auto-inject unsubscribe footer if not present
+        if !personalized_content.contains("unsubscribe") {
+            personalized_content.push_str(&format!(
+                "<br/><hr style=\"border:none;border-top:1px solid #eee;margin:24px 0\"/><p style=\"font-size:12px;color:#999;text-align:center\">You received this email because you're subscribed. <a href=\"{}\" style=\"color:#999\">Unsubscribe</a></p>",
+                unsubscribe_url
+            ));
+        }
+
         eprintln!("[mailfleet] Sending to {} from {}", contact.email, from_address);
         match ses::send_email(
             &client,
             &from_address,
             &contact.email,
-            &campaign.subject,
-            content,
+            &personalized_subject,
+            &personalized_content,
             None,
             config_set,
             Some(&campaign_id_str),

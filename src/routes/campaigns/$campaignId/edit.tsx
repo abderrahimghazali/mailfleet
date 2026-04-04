@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Loader2, Save, X, Send, Mail, Users, FileText } from 'lucide-react'
 import { toast } from 'sonner'
-import { PlateEditor } from '@/components/plate-editor'
+import { EmailEditor } from '@/components/email-editor'
 
 export const Route = createFileRoute('/campaigns/$campaignId/edit')({
   component: EditCampaign,
@@ -366,12 +366,14 @@ function EditCampaign() {
 
             {/* Email Content */}
             <div className="space-y-2">
-              <Label htmlFor="content">Email Content</Label>
-              <PlateEditor
-                content={editorContent}
-                onChange={setEditorContent}
-                placeholder="Write your email content here..."
+              <Label>Email Content</Label>
+              <EmailEditor
+                contentHtml={editorContent}
+                onChange={(_json, html) => setEditorContent(html)}
               />
+              <p className="text-xs text-muted-foreground">
+                Merge tags: {'{{first_name}}'}, {'{{last_name}}'}, {'{{email}}'} — auto-replaced per contact on send
+              </p>
             </div>
 
             {/* From Settings (read-only) */}

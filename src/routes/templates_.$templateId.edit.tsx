@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { PlateEditor } from '@/components/plate-editor'
+import { EmailEditor } from '@/components/email-editor'
 import { toast } from 'sonner'
 import { Loader2, Save, X } from 'lucide-react'
 
@@ -150,12 +150,14 @@ function EditTemplate() {
               </div>
 
               <div className="space-y-2">
-                <Label>Email Content (HTML)</Label>
-                <PlateEditor
-                  content={htmlContent}
-                  onChange={setHtmlContent}
-                  placeholder="Edit your email template..."
+                <Label>Email Content</Label>
+                <EmailEditor
+                  contentHtml={htmlContent}
+                  onChange={(_json, html) => setHtmlContent(html)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Merge tags: {'{{first_name}}'}, {'{{last_name}}'}, {'{{email}}'}, {'{{unsubscribe_url}}'}
+                </p>
               </div>
 
               <div className="space-y-2">

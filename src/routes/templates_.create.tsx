@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { PlateEditor } from '@/components/plate-editor'
+import { EmailEditor } from '@/components/email-editor'
 import { toast } from 'sonner'
 import { Loader2, Save, X } from 'lucide-react'
 
@@ -108,15 +108,16 @@ function CreateTemplate() {
               </div>
 
               <div className="space-y-2">
-                <Label>Email Content (HTML) *</Label>
-                <PlateEditor
-                  content={htmlContent}
-                  onChange={(val) => {
-                    setHtmlContent(val)
+                <Label>Email Content *</Label>
+                <EmailEditor
+                  onChange={(_json, html) => {
+                    setHtmlContent(html)
                     if (errors.content) setErrors(prev => ({ ...prev, content: '' }))
                   }}
-                  placeholder="Design your email template..."
                 />
+                <p className="text-xs text-muted-foreground">
+                  Use merge tags: {'{{first_name}}'}, {'{{last_name}}'}, {'{{email}}'}, {'{{unsubscribe_url}}'}
+                </p>
                 {errors.content && <p className="text-sm text-red-500">{errors.content}</p>}
               </div>
 

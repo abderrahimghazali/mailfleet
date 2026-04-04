@@ -152,6 +152,42 @@
   @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-chart-4;
 }
 
+/* Maily editor */
+.maily-editor-wrapper {
+  border-radius: var(--radius-lg);
+  overflow: visible;
+  background: var(--card);
+  min-height: 400px;
+  position: relative;
+}
+.maily-editor-wrapper .ProseMirror {
+  min-height: 350px;
+  padding: 20px 24px;
+  outline: none;
+}
+.maily-editor-wrapper .ProseMirror:focus {
+  outline: none;
+}
+.maily-editor-wrapper .ProseMirror * {
+  font-size: revert;
+  line-height: 1.6;
+}
+.maily-editor-wrapper [data-drag-handle] {
+  z-index: 50;
+}
+.maily-editor-wrapper [data-node-actions] {
+  z-index: 50;
+}
+/* Fix ProseMirror drop cursor */
+.ProseMirror-dropcursor {
+  border-color: var(--primary) !important;
+  border-width: 2px !important;
+}
+/* Prevent Tauri drag region from capturing editor drags */
+.maily-editor-wrapper * {
+  -webkit-app-region: no-drag;
+}
+
 /* Subtle noise texture overlay for depth */
 .noise-bg::before {
   content: '';

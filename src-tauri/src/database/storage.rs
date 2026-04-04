@@ -146,7 +146,6 @@ impl DatabaseStorage {
         self.read_file("suppression.json").await
     }
 
-    #[allow(dead_code)]
     pub async fn save_suppression(&self, data: &SuppressionData) -> Result<()> {
         self.write_file("suppression.json", data).await
     }

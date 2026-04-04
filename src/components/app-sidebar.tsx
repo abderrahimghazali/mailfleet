@@ -84,13 +84,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem className="pt-2">
               <SidebarMenuButton size="lg" asChild>
                 <Link to={route.home}>
-                  <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-primary shadow-sm">
-                    <img src="/icon-32.png" alt="Mailfleet" className="size-5 brightness-0 invert" />
+                  <div className="flex aspect-square size-9 items-center justify-center rounded-xl">
+                    <img src="/icon-32.png" alt="Mailfleet" className="size-9 rounded-xl" />
                   </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-display font-bold text-base tracking-tight">MailFleet</span>
-                    <span className="truncate text-xs text-muted-foreground">Email campaigns</span>
-                  </div>
+                  <span className="font-display font-bold text-base tracking-tight">MailFleet</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

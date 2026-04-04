@@ -11,11 +11,19 @@ import {
   Users,
   BarChart3,
   Eye,
-  AlertCircle
+  AlertCircle,
+  Send,
+  CheckCircle2,
+  MousePointer,
+  AlertTriangle,
+  TrendingUp,
 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/campaigns_/$campaignId')({
@@ -138,6 +146,24 @@ function CampaignDetail() {
           </div>
 
           <div className="flex items-center gap-2">
+            {campaign.status === 'Sent' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    await DatabaseService.updateCampaignStatus(campaign.id, 'Draft')
+                    setCampaign({ ...campaign, status: 'Draft' })
+                    toast.success('Campaign reset to Draft. You can now resend it.')
+                  } catch {
+                    toast.error('Failed to reset campaign')
+                  }
+                }}
+              >
+                <Send className="h-4 w-4" />
+                Resend
+              </Button>
+            )}
             <Button variant="outline" size="sm" asChild>
               <Link to="/campaigns/$campaignId/edit" params={{ campaignId: campaign.id }}>
                 <Edit className="h-4 w-4" />
@@ -223,41 +249,94 @@ function CampaignDetail() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6 mt-6">
-            {analytics ? (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-background rounded-lg border">
-                  <p className="text-3xl font-bold text-blue-600">{analytics.sent}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Sent</p>
-                </div>
-                <div className="text-center p-4 bg-background rounded-lg border">
-                  <p className="text-3xl font-bold text-green-600">{analytics.delivered}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Delivered</p>
-                </div>
-                <div className="text-center p-4 bg-background rounded-lg border">
-                  <p className="text-3xl font-bold text-purple-600">{analytics.opened}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Opened</p>
-                </div>
-                <div className="text-center p-4 bg-background rounded-lg border">
-                  <p className="text-3xl font-bold text-orange-600">{analytics.clicked}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Clicked</p>
-                </div>
-                {analytics.bounced > 0 && (
-                  <div className="text-center p-4 bg-background rounded-lg border">
-                    <p className="text-3xl font-bold text-red-600">{analytics.bounced}</p>
-                    <p className="text-sm text-muted-foreground mt-1">Bounced</p>
+            {analytics ? (() => {
+              const formatPct = (n: number, d: number) => d === 0 ? '0%' : `${((n / d) * 100).toFixed(1)}%`
+              const metrics = [
+                { label: 'Sent', value: analytics.sent, icon: Send, color: 'text-blue-600 dark:text-blue-400', gradient: 'from-blue-500/10 to-indigo-500/10' },
+                { label: 'Delivered', value: analytics.delivered, sub: formatPct(analytics.delivered, analytics.sent), icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', gradient: 'from-emerald-500/10 to-teal-500/10' },
+                { label: 'Opened', value: analytics.opened, sub: formatPct(analytics.opened, analytics.sent), icon: TrendingUp, color: 'text-violet-600 dark:text-violet-400', gradient: 'from-violet-500/10 to-purple-500/10' },
+                { label: 'Clicked', value: analytics.clicked, sub: formatPct(analytics.clicked, analytics.opened), icon: MousePointer, color: 'text-amber-600 dark:text-amber-400', gradient: 'from-amber-500/10 to-orange-500/10' },
+                { label: 'Bounced', value: analytics.bounced, sub: formatPct(analytics.bounced, analytics.sent), icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', gradient: 'from-red-500/10 to-orange-500/10' },
+              ]
+              const chartData = [
+                { name: 'Sent', value: analytics.sent, fill: 'var(--color-chart-1)' },
+                { name: 'Delivered', value: analytics.delivered, fill: 'var(--color-chart-2)' },
+                { name: 'Opened', value: analytics.opened, fill: 'var(--color-chart-3)' },
+                { name: 'Clicked', value: analytics.clicked, fill: 'var(--color-chart-4)' },
+                { name: 'Bounced', value: analytics.bounced, fill: 'var(--color-chart-5)' },
+              ]
+              const chartConfig: ChartConfig = {
+                value: { label: 'Count' },
+              }
+              return (
+                <>
+                  {/* Metric Cards */}
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    {metrics.map((m) => (
+                      <Card key={m.label} className="card-hover shadow-sm overflow-hidden relative">
+                        <div className={`absolute inset-0 bg-gradient-to-br ${m.gradient} opacity-60`} />
+                        <CardContent className="p-5 relative">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="text-sm text-muted-foreground font-medium">{m.label}</p>
+                              <p className="text-3xl font-display font-bold mt-1 tracking-tight">{m.value}</p>
+                              {m.sub && <p className={`text-xs font-semibold mt-1 ${m.color}`}>{m.sub}</p>}
+                            </div>
+                            <div className="p-2.5 rounded-xl bg-background/80 shadow-sm">
+                              <m.icon className={`h-5 w-5 ${m.color}`} />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                )}
-                {analytics.complained > 0 && (
-                  <div className="text-center p-4 bg-background rounded-lg border">
-                    <p className="text-3xl font-bold text-red-600">{analytics.complained}</p>
-                    <p className="text-sm text-muted-foreground mt-1">Complaints</p>
-                  </div>
-                )}
-              </div>
-            ) : (
+
+                  {/* Funnel Chart */}
+                  <Card className="shadow-sm">
+                    <CardContent className="p-6">
+                      <h3 className="font-display text-lg font-semibold mb-4">Email Funnel</h3>
+                      <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                        <BarChart data={chartData} accessibilityLayer layout="vertical">
+                          <CartesianGrid horizontal={false} strokeDasharray="3 3" className="stroke-border" />
+                          <XAxis type="number" tickLine={false} axisLine={false} fontSize={11} />
+                          <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} fontSize={12} width={70} />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="value" radius={[0, 6, 6, 0]} />
+                        </BarChart>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Detailed Breakdown */}
+                  <Card className="shadow-sm">
+                    <CardContent className="p-6">
+                      <h3 className="font-display text-lg font-semibold mb-4">Delivery Breakdown</h3>
+                      <div className="space-y-3">
+                        {[
+                          { label: 'Delivery Rate', value: formatPct(analytics.delivered, analytics.sent), bar: analytics.sent > 0 ? (analytics.delivered / analytics.sent) * 100 : 0, color: 'bg-emerald-500' },
+                          { label: 'Open Rate', value: formatPct(analytics.opened, analytics.delivered), bar: analytics.delivered > 0 ? (analytics.opened / analytics.delivered) * 100 : 0, color: 'bg-violet-500' },
+                          { label: 'Click Rate', value: formatPct(analytics.clicked, analytics.opened), bar: analytics.opened > 0 ? (analytics.clicked / analytics.opened) * 100 : 0, color: 'bg-amber-500' },
+                          { label: 'Bounce Rate', value: formatPct(analytics.bounced, analytics.sent), bar: analytics.sent > 0 ? (analytics.bounced / analytics.sent) * 100 : 0, color: 'bg-red-500' },
+                        ].map((item) => (
+                          <div key={item.label}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium">{item.label}</span>
+                              <span className="text-sm font-semibold">{item.value}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-muted overflow-hidden">
+                              <div className={`h-full rounded-full ${item.color} transition-all`} style={{ width: `${Math.min(item.bar, 100)}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )
+            })() : (
               <div className="text-center p-12">
-                <Eye className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg text-muted-foreground mb-2">No analytics data available yet</p>
+                <Eye className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+                <p className="text-lg font-medium mb-2">No analytics data yet</p>
                 <p className="text-sm text-muted-foreground">
                   Analytics will appear here once the campaign is sent
                 </p>

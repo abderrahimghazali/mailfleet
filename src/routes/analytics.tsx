@@ -174,21 +174,22 @@ function Analytics() {
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {[
-                { label: 'Delivery Rate', value: `${deliveryRate}%`, sub: `${totals.totalDelivered.toLocaleString()} delivered`, icon: Mail, iconBg: 'bg-blue-500/10', iconColor: 'text-blue-600 dark:text-blue-400' },
-                { label: 'Open Rate', value: `${openRate}%`, sub: `${totals.totalOpened.toLocaleString()} opened`, icon: TrendingUp, iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-600 dark:text-emerald-400' },
-                { label: 'Click Rate', value: `${clickRate}%`, sub: `${totals.totalClicked.toLocaleString()} clicked`, icon: MousePointer, iconBg: 'bg-violet-500/10', iconColor: 'text-violet-600 dark:text-violet-400' },
-                { label: 'Bounce Rate', value: `${bounceRate}%`, sub: `${totals.totalBounced.toLocaleString()} bounced`, icon: AlertTriangle, iconBg: 'bg-red-500/10', iconColor: 'text-red-600 dark:text-red-400' },
+                { label: 'Delivery Rate', value: `${deliveryRate}%`, sub: `${totals.totalDelivered.toLocaleString()} delivered`, icon: Mail, color: 'from-blue-500/10 to-indigo-500/10', iconColor: 'text-blue-600 dark:text-blue-400' },
+                { label: 'Open Rate', value: `${openRate}%`, sub: `${totals.totalOpened.toLocaleString()} opened`, icon: TrendingUp, color: 'from-emerald-500/10 to-teal-500/10', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+                { label: 'Click Rate', value: `${clickRate}%`, sub: `${totals.totalClicked.toLocaleString()} clicked`, icon: MousePointer, color: 'from-violet-500/10 to-purple-500/10', iconColor: 'text-violet-600 dark:text-violet-400' },
+                { label: 'Bounce Rate', value: `${bounceRate}%`, sub: `${totals.totalBounced.toLocaleString()} bounced`, icon: AlertTriangle, color: 'from-red-500/10 to-orange-500/10', iconColor: 'text-red-600 dark:text-red-400' },
               ].map((metric) => (
-                <Card key={metric.label} className="shadow-sm">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl ${metric.iconBg}`}>
-                        <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
-                      </div>
+                <Card key={metric.label} className="card-hover shadow-sm overflow-hidden relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${metric.color} opacity-60`} />
+                  <CardContent className="p-5 relative">
+                    <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
-                        <p className="text-2xl font-display font-bold tracking-tight">{metric.value}</p>
-                        <p className="text-xs text-muted-foreground">{metric.sub}</p>
+                        <p className="text-3xl font-display font-bold mt-1 tracking-tight">{metric.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{metric.sub}</p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-background/80 shadow-sm">
+                        <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
                       </div>
                     </div>
                   </CardContent>

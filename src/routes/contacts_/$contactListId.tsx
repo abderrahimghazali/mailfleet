@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -276,28 +277,20 @@ function ContactListDetail() {
 
           <TabsContent value="analytics" className="space-y-6 mt-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-background rounded-lg border">
-                <p className="text-3xl font-bold text-blue-600">{contactList.contact_count}</p>
-                <p className="text-sm text-muted-foreground mt-1">Total Contacts</p>
-              </div>
-              <div className="text-center p-4 bg-background rounded-lg border">
-                <p className="text-3xl font-bold text-green-600">
-                  {contacts.filter(c => c.status === 'Active').length}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">Active</p>
-              </div>
-              <div className="text-center p-4 bg-background rounded-lg border">
-                <p className="text-3xl font-bold text-red-600">
-                  {contacts.filter(c => c.status === 'Unsubscribed').length}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">Unsubscribed</p>
-              </div>
-              <div className="text-center p-4 bg-background rounded-lg border">
-                <p className="text-3xl font-bold text-yellow-600">
-                  {contacts.filter(c => c.status === 'Bounced').length}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">Bounced</p>
-              </div>
+              {[
+                { label: 'Total Contacts', value: contactList.contact_count, color: 'text-blue-600 dark:text-blue-400', gradient: 'from-blue-500/10 to-indigo-500/10' },
+                { label: 'Active', value: contacts.filter(c => c.status === 'Active').length, color: 'text-emerald-600 dark:text-emerald-400', gradient: 'from-emerald-500/10 to-teal-500/10' },
+                { label: 'Unsubscribed', value: contacts.filter(c => c.status === 'Unsubscribed').length, color: 'text-red-600 dark:text-red-400', gradient: 'from-red-500/10 to-orange-500/10' },
+                { label: 'Bounced', value: contacts.filter(c => c.status === 'Bounced').length, color: 'text-amber-600 dark:text-amber-400', gradient: 'from-amber-500/10 to-yellow-500/10' },
+              ].map((stat) => (
+                <Card key={stat.label} className="shadow-sm overflow-hidden relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-60`} />
+                  <CardContent className="p-5 relative text-center">
+                    <p className={`text-3xl font-display font-bold tracking-tight ${stat.color}`}>{stat.value}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
         </Tabs>

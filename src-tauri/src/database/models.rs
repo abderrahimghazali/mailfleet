@@ -192,9 +192,56 @@ pub struct ContactsData {
     pub contacts: Vec<Contact>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemplatesData {
     pub templates: Vec<Template>,
+}
+
+impl Default for TemplatesData {
+    fn default() -> Self {
+        use chrono::TimeZone;
+        let ts = Utc.with_ymd_and_hms(2026, 4, 1, 10, 0, 0).unwrap();
+        Self {
+            templates: vec![
+                Template {
+                    id: Uuid::new_v4(), name: "Welcome Email".into(),
+                    subject: "Welcome to the team, {{first_name}}!".into(),
+                    html_content: "<img src=\"https://placehold.co/600x200/4f46e5/ffffff?text=Welcome+to+the+Team\" alt=\"Welcome banner\" style=\"width:100%;border-radius:8px;margin-bottom:16px\"/><h2>Welcome aboard, {{first_name}}!</h2><p>We are excited to have you with us. Here is what you can do next:</p><ul><li>Complete your profile</li><li>Explore the dashboard</li><li>Connect with the team</li></ul><p>If you have any questions, just reply to this email.</p><p>Cheers,<br/>The Team</p>".into(),
+                    text_content: None, created_at: ts, updated_at: ts,
+                },
+                Template {
+                    id: Uuid::new_v4(), name: "Monthly Newsletter".into(),
+                    subject: "Your Monthly Update".into(),
+                    html_content: "<h2>Monthly Newsletter</h2><p>Hi {{first_name}},</p><p>Here is what happened this month:</p><h3>Highlights</h3><ul><li>Feature update #1</li><li>Feature update #2</li><li>Feature update #3</li></ul><h3>Coming Soon</h3><p>We are working on some exciting things. Stay tuned for more updates next month.</p><p>Best,<br/>The Team</p>".into(),
+                    text_content: None, created_at: ts, updated_at: ts,
+                },
+                Template {
+                    id: Uuid::new_v4(), name: "Product Announcement".into(),
+                    subject: "Big news: Check out what is new".into(),
+                    html_content: "<img src=\"https://placehold.co/600x250/0ea5e9/ffffff?text=New+Release\" alt=\"Product announcement\" style=\"width:100%;border-radius:8px;margin-bottom:16px\"/><h1>Something new is here</h1><p>Hi {{first_name}},</p><p>We have been working hard and are thrilled to share our latest update with you.</p><img src=\"https://placehold.co/600x300/f4f4f5/71717a?text=Product+Screenshot\" alt=\"Product screenshot\" style=\"width:100%;border-radius:8px;margin:16px 0\"/><p><strong>What is new:</strong></p><ul><li>Faster performance</li><li>New integrations</li><li>Redesigned dashboard</li></ul><p>Try it out today and let us know what you think.</p>".into(),
+                    text_content: None, created_at: ts, updated_at: ts,
+                },
+                Template {
+                    id: Uuid::new_v4(), name: "Win Back".into(),
+                    subject: "We miss you, {{first_name}}".into(),
+                    html_content: "<h2>It has been a while, {{first_name}}</h2><p>We noticed you have not been around lately. A lot has changed since your last visit!</p><ul><li>New features launched</li><li>Performance improvements</li><li>Updated pricing plans</li></ul><p>Come back and take a look. We think you will like what you see.</p>".into(),
+                    text_content: None, created_at: ts, updated_at: ts,
+                },
+                Template {
+                    id: Uuid::new_v4(), name: "Event Invitation".into(),
+                    subject: "You are invited: Join us live".into(),
+                    html_content: "<img src=\"https://placehold.co/600x220/7c3aed/ffffff?text=You're+Invited\" alt=\"Event banner\" style=\"width:100%;border-radius:8px;margin-bottom:16px\"/><h2>You are invited!</h2><p>Hi {{first_name}},</p><p>We would love for you to join us at our upcoming event.</p><h3>Event Details</h3><ul><li><strong>Date:</strong> TBD</li><li><strong>Time:</strong> TBD</li><li><strong>Where:</strong> Online</li></ul><p>Space is limited, so make sure to save your spot.</p><p>See you there!</p>".into(),
+                    text_content: None, created_at: ts, updated_at: ts,
+                },
+                Template {
+                    id: Uuid::new_v4(), name: "Simple Text Email".into(),
+                    subject: "Quick update from us".into(),
+                    html_content: "<p>Hi {{first_name}},</p><p>Just a quick note to let you know about a few things:</p><p>First, we shipped a handful of improvements this week based on your feedback. Nothing flashy, just things that make the experience smoother.</p><p>Second, we are planning something bigger for next month. More details soon.</p><p>Thanks for being part of this.</p><p>Best,<br/>The Team</p>".into(),
+                    text_content: None, created_at: ts, updated_at: ts,
+                },
+            ],
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

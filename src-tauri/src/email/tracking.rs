@@ -7,9 +7,11 @@ use aws_sdk_sesv2::types::{
 };
 use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
+use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::database::models::{ContactStatus, SuppressedEmail, SuppressionReason};
 use crate::database::storage::DatabaseStorage;
 
 const CONFIG_SET_NAME: &str = "mailfleet-tracking";
@@ -206,7 +208,11 @@ pub async fn poll_events(
     }
 
     let mut analytics_data = storage.get_analytics().await?;
+    let mut contacts_data = storage.get_contacts().await?;
+    let mut suppression_data = storage.get_suppression().await?;
     let mut processed = 0u32;
+    let mut contacts_changed = false;
+    let mut suppression_changed = false;
 
     for msg in messages {
         let body = msg.body().unwrap_or("");
@@ -222,9 +228,10 @@ pub async fn poll_events(
                     .and_then(|v| v.first())
                     .cloned();
 
+                let recipient_email = ses_event.mail.destination.first().cloned();
+
                 if let Some(cid) = campaign_id_str {
                     if let Ok(campaign_uuid) = Uuid::parse_str(&cid) {
-                        // Find or create analytics entry
                         let entry = analytics_data
                             .campaign_analytics
                             .iter_mut()
@@ -235,8 +242,51 @@ pub async fn poll_events(
                                 "Delivery" => analytics.delivered += 1,
                                 "Open" => analytics.opened += 1,
                                 "Click" => analytics.clicked += 1,
-                                "Bounce" => analytics.bounced += 1,
-                                "Complaint" => analytics.complained += 1,
+                                "Bounce" => {
+                                    analytics.bounced += 1;
+                                    // Auto-suppress bounced email
+                                    if let Some(ref email) = recipient_email {
+                                        let email_lower = email.to_lowercase();
+                                        // Update contact status
+                                        for contact in &mut contacts_data.contacts {
+                                            if contact.email.to_lowercase() == email_lower {
+                                                contact.status = ContactStatus::Bounced;
+                                                contacts_changed = true;
+                                            }
+                                        }
+                                        // Add to suppression list
+                                        if !suppression_data.suppressed_emails.iter().any(|s| s.email.to_lowercase() == email_lower) {
+                                            suppression_data.suppressed_emails.push(SuppressedEmail {
+                                                email: email_lower,
+                                                reason: SuppressionReason::Bounced,
+                                                timestamp: Utc::now(),
+                                                campaign_id: Some(campaign_uuid),
+                                            });
+                                            suppression_changed = true;
+                                        }
+                                    }
+                                }
+                                "Complaint" => {
+                                    analytics.complained += 1;
+                                    if let Some(ref email) = recipient_email {
+                                        let email_lower = email.to_lowercase();
+                                        for contact in &mut contacts_data.contacts {
+                                            if contact.email.to_lowercase() == email_lower {
+                                                contact.status = ContactStatus::Complained;
+                                                contacts_changed = true;
+                                            }
+                                        }
+                                        if !suppression_data.suppressed_emails.iter().any(|s| s.email.to_lowercase() == email_lower) {
+                                            suppression_data.suppressed_emails.push(SuppressedEmail {
+                                                email: email_lower,
+                                                reason: SuppressionReason::Complained,
+                                                timestamp: Utc::now(),
+                                                campaign_id: Some(campaign_uuid),
+                                            });
+                                            suppression_changed = true;
+                                        }
+                                    }
+                                }
                                 _ => {}
                             }
                             processed += 1;
@@ -260,6 +310,12 @@ pub async fn poll_events(
     if processed > 0 {
         storage.save_analytics(&analytics_data).await?;
     }
+    if contacts_changed {
+        storage.save_contacts(&contacts_data).await?;
+    }
+    if suppression_changed {
+        storage.save_suppression(&suppression_data).await?;
+    }
 
     Ok(processed)
 }
@@ -280,4 +336,6 @@ struct SesEvent {
 #[derive(Deserialize)]
 struct SesMail {
     tags: Option<std::collections::HashMap<String, Vec<String>>>,
+    #[serde(default)]
+    destination: Vec<String>,
 }
