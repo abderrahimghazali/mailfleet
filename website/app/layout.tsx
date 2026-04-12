@@ -52,8 +52,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og.png",
-        width: 1200,
-        height: 630,
+        width: 1332,
+        height: 831,
         alt: "MailFleet — Self-hosted email campaign manager",
       },
     ],
