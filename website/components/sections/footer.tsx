@@ -38,7 +38,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="transition-colors hover:text-fg"
           >
-            MIT License
+            License
           </a>
         </div>
 

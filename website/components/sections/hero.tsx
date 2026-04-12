@@ -34,7 +34,7 @@ export function Hero() {
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/80 px-4 py-1.5 text-[13px] text-muted-fg shadow-sm backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-            Open Source &middot; MIT Licensed
+            Open Source &middot; Free Forever
           </span>
         </motion.div>
 

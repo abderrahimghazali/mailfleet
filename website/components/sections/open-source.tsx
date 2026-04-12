@@ -19,7 +19,7 @@ export function OpenSource() {
           <span className="text-muted-fg">No strings attached.</span>
         </h2>
         <p className="mt-5 text-[17px] leading-relaxed text-muted-fg">
-          MIT licensed. No tracking, no telemetry, no subscription.
+          No tracking. No telemetry. No subscription.
           <br className="hidden sm:block" />
           Your data never leaves your machine.
         </p>
