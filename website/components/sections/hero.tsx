@@ -8,6 +8,7 @@ const builtWith = [
   { name: "TypeScript", src: "/typescript.svg" },
   { name: "Rust", src: "/rust.svg" },
   { name: "Tailwind CSS", src: "/tailwindcss.svg" },
+  { name: "AWS", src: "/aws.svg" },
 ];
 
 export function Hero() {
