@@ -23,13 +23,15 @@ function EditorMockup() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-surface/60 px-2 py-1">
           {[
-            { label: "B", active: bold, toggle: () => setBold(!bold), style: "font-bold" },
-            { label: "I", active: italic, toggle: () => setItalic(!italic), style: "italic" },
-            { label: "U", active: false, toggle: () => {}, style: "underline" },
+            { label: "B", aria: "Toggle bold", active: bold, toggle: () => setBold(!bold), style: "font-bold" },
+            { label: "I", aria: "Toggle italic", active: italic, toggle: () => setItalic(!italic), style: "italic" },
+            { label: "U", aria: "Toggle underline", active: false, toggle: () => {}, style: "underline" },
           ].map((btn) => (
             <button
               key={btn.label}
               onClick={btn.toggle}
+              aria-label={btn.aria}
+              aria-pressed={btn.active}
               className={cn(
                 "flex h-6 w-6 items-center justify-center rounded text-[11px] transition-all",
                 btn.style,
@@ -175,15 +177,17 @@ function ContactsMockup() {
         )}
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="grid grid-cols-[1.2fr_1.5fr_5rem_3rem] gap-4 border-b border-border bg-surface/50 px-4 py-2.5 text-[11px] font-medium text-muted-fg">
+        <div className="hidden grid-cols-[1.2fr_1.5fr_5rem_3rem] gap-4 border-b border-border bg-surface/50 px-4 py-2.5 text-[11px] font-medium text-muted-fg sm:grid">
           <div>Name</div><div>Email</div><div className="text-center">Status</div><div className="text-center">Lists</div>
         </div>
         {filtered.map((c, i) => (
-          <div
+          <button
+            type="button"
             key={c.email}
             onClick={() => toggleSelect(i)}
+            aria-label={`Select ${c.name}`}
             className={cn(
-              "grid cursor-pointer grid-cols-[1.2fr_1.5fr_5rem_3rem] items-center gap-4 border-b border-border/40 px-4 py-3 text-[12px] transition-colors last:border-0",
+              "grid w-full cursor-pointer grid-cols-[1fr_auto] gap-2 border-b border-border/40 px-4 py-3 text-left text-[12px] transition-colors last:border-0 sm:grid-cols-[1.2fr_1.5fr_5rem_3rem] sm:gap-4",
               selected.has(i) ? "bg-primary/[0.04]" : "hover:bg-surface/50"
             )}
           >
@@ -196,22 +200,26 @@ function ContactsMockup() {
               </div>
               <span className="font-medium text-fg">{c.name}</span>
             </div>
-            <div className="text-muted-fg">{c.email}</div>
-            <div className="text-center">
-              <button
+            <div className="hidden text-muted-fg sm:block">{c.email}</div>
+            <div className="text-right sm:text-center">
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={(e) => { e.stopPropagation(); toggleStatus(i); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); toggleStatus(i); } }}
+                aria-label={`Toggle status for ${c.name}, currently ${c.status}`}
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-medium transition-all hover:scale-105",
+                  "inline-block cursor-pointer rounded-full px-2 py-0.5 text-[10px] font-medium transition-all hover:scale-105",
                   c.status === "valid" && "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
                   c.status === "pending" && "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
                   c.status === "invalid" && "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400"
                 )}
               >
                 {c.status}
-              </button>
+              </span>
             </div>
-            <div className="text-center text-muted-fg">{c.lists}</div>
-          </div>
+            <div className="hidden text-center text-muted-fg sm:block">{c.lists}</div>
+          </button>
         ))}
       </div>
     </div>
@@ -246,7 +254,7 @@ function AnalyticsMockup() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { label: "Sent", value: stats.sent, color: "text-fg" },
           { label: "Opens", value: stats.opens, color: "text-emerald-600 dark:text-emerald-400" },

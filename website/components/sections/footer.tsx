@@ -12,6 +12,7 @@ export function Footer() {
               alt="MailFleet"
               width={28}
               height={28}
+              loading="lazy"
               className="rounded-md"
             />
             MailFleet
@@ -27,8 +28,8 @@ export function Footer() {
             <Link href="#features" className="transition-colors hover:text-fg">
               Features
             </Link>
-            <Link href="#how-it-works" className="transition-colors hover:text-fg">
-              How It Works
+            <Link href="#open-source" className="transition-colors hover:text-fg">
+              Open Source
             </Link>
             <a
               href="https://github.com/abderrahimghazali/mailfleet/releases"
@@ -92,6 +93,7 @@ export function Footer() {
           href="https://github.com/abderrahimghazali/mailfleet"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="MailFleet on GitHub"
           className="text-muted-fg transition-colors hover:text-fg"
         >
           <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">

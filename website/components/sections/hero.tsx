@@ -76,7 +76,7 @@ export function Hero() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2.5 rounded-xl bg-primary px-7 py-3 text-[15px] font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.05),0_4px_12px_rgba(5,24,166,0.25)] transition-all hover:shadow-[0_1px_2px_rgba(0,0,0,0.05),0_8px_24px_rgba(5,24,166,0.3)] hover:brightness-110"
           >
-            <Image src="/applescript.svg" alt="" width={16} height={16} className="h-4 w-4 brightness-0 invert" />
+            <Image src="/applescript.svg" alt="Apple" width={16} height={16} className="h-4 w-4 brightness-0 invert" aria-hidden="true" />
             Download for macOS
           </a>
         </motion.div>
